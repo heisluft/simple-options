@@ -3,29 +3,40 @@ package de.heisluft.cli.simpleopt;
 import java.io.File;
 import java.nio.file.Path;
 import java.nio.file.Paths;
+import java.util.Collections;
 import java.util.HashMap;
 import java.util.Locale;
 import java.util.Map;
+import java.util.Objects;
 import java.util.function.Consumer;
 import java.util.function.Function;
 
 /**
- * Represents a CLI option, consisting of its name, shorthand and its callback to be run if set
+ * An OptionDefinition represents a CLI option, consisting of its name, shorthand and its callback
+ * to be run if set. It also is able to auto-convert its cli string value to a specified type.
+ *
+ * @param <E> the type of this options value. {@link Void} for options that do not take values.
+ *
+ * @since 0.1.0
  */
-public class OptionDefinition<E> {
+//TODO: document further
+public final class OptionDefinition<E> {
 
-  private static final Map<Class<?>, Function<String, ?>> DEFAULT_CONVERTERS = new HashMap<>();
+  /** The unmodifiable map of all default converters */
+  private static final Map<Class<?>, Function<String, ?>> DEFAULT_CONVERTERS;
 
   static {
-    DEFAULT_CONVERTERS.put(Boolean.class, Boolean::parseBoolean);
-    DEFAULT_CONVERTERS.put(Byte.class, Byte::parseByte);
-    DEFAULT_CONVERTERS.put(Integer.class, Integer::parseInt);
-    DEFAULT_CONVERTERS.put(Long.class, Long::parseLong);
-    DEFAULT_CONVERTERS.put(Float.class, Float::parseFloat);
-    DEFAULT_CONVERTERS.put(Double.class, Double::parseDouble);
-    DEFAULT_CONVERTERS.put(File.class, File::new);
-    DEFAULT_CONVERTERS.put(Path.class, Paths::get);
-    DEFAULT_CONVERTERS.put(String.class, Function.identity());
+    Map<Class<?>, Function<String, ?>> converters = new HashMap<>();
+    converters.put(Boolean.class, Boolean::parseBoolean);
+    converters.put(Byte.class, Byte::parseByte);
+    converters.put(Integer.class, Integer::parseInt);
+    converters.put(Long.class, Long::parseLong);
+    converters.put(Float.class, Float::parseFloat);
+    converters.put(Double.class, Double::parseDouble);
+    converters.put(File.class, File::new);
+    converters.put(Path.class, Paths::get);
+    converters.put(String.class, Function.identity());
+    DEFAULT_CONVERTERS = Collections.unmodifiableMap(converters);
   }
 
   /** The name of the option */
@@ -38,9 +49,13 @@ public class OptionDefinition<E> {
   final Consumer<E> valueCallback;
   /** For non-valued options this callback is called if the option is set. */
   final Runnable onDefinedCallBack;
-  private String description = "", valueHelpName = "VALUE";
+  private String description = "";
+  private String valueHelpName = "VALUE";
+  private Function<String, E> valueConverter;
 
-  Function<String, E> valueConverter;
+  Function<String, E> valueConverter() {
+    return valueConverter;
+  }
 
   public static OptionDefinition<String> withArg(String name, Consumer<String> valueCallback) {
     return withArg(name, String.class, valueCallback);
@@ -143,5 +158,15 @@ public class OptionDefinition<E> {
   public OptionDefinition<E> valuesConvertedBy(Function<String, E> converter) {
     this.valueConverter = converter;
     return this;
+  }
+
+  @Override
+  public boolean equals(Object obj) {
+    return obj instanceof OptionDefinition && name.equals(((OptionDefinition<?>) obj).name);
+  }
+
+  @Override
+  public int hashCode() {
+    return name.hashCode();
   }
 }
