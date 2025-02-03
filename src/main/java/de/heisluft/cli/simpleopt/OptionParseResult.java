@@ -1,6 +1,8 @@
 package de.heisluft.cli.simpleopt;
 
 import de.heisluft.cli.simpleopt.option.OptionDefinition;
+import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
 
 import java.util.Collections;
 import java.util.List;
@@ -14,14 +16,14 @@ import java.util.Map;
  */
 public final class OptionParseResult {
   /** The unmodifiable values of all set options. Never {@code null}. */
-  public final Map<OptionDefinition<?>, Object> options;
+  public final @NotNull Map<OptionDefinition<?>, Object> options;
   /** The matched subcommand, may be {@code null}. */
-  public final String subcommand;
+  public final @Nullable String subcommand;
   /**
    * The unmodifiable list of all args that followed the last option or the sub-command.
    * Never {@code null}.
    */
-  public final List<String> additional;
+  public final @NotNull List<String> additional;
 
   /**
    * Construct and populate the parse result. Non-public api, users should use
@@ -31,7 +33,8 @@ public final class OptionParseResult {
    * @param subcommand the matched subcommand, may be {@code null}.
    * @param additional the list of additional cli args, never {@code null}.
    */
-  OptionParseResult(Map<OptionDefinition<?>, Object> options, String subcommand, List<String> additional) {
+  OptionParseResult(@NotNull Map<OptionDefinition<?>, Object> options, @Nullable String subcommand,
+      @NotNull List<String> additional) {
     this.options = Collections.unmodifiableMap(options);
     this.subcommand = subcommand;
     this.additional = Collections.unmodifiableList(additional);
@@ -49,7 +52,7 @@ public final class OptionParseResult {
    * @since 0.1.0
    */
   @SuppressWarnings("unchecked")
-  public <T> T getValue(OptionDefinition<T> option) {
+  public <T> @Nullable T getValue(@NotNull OptionDefinition<T> option) {
     if(!options.containsKey(option)) throw new IllegalArgumentException("Option " + option.name + " was not set");
     if(!option.takesValue) throw new IllegalArgumentException("Option " + option.name + " does not take a value");
     return (T) options.get(option);
@@ -64,7 +67,7 @@ public final class OptionParseResult {
    *
    * @since 0.1.0
    */
-  public boolean isSet(OptionDefinition<?> option) {
+  public boolean isSet(@NotNull OptionDefinition<?> option) {
     return options.containsKey(option);
   }
 }

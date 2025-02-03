@@ -2,12 +2,10 @@ package de.heisluft.cli.simpleopt;
 
 import de.heisluft.cli.simpleopt.option.OptionDefinition;
 import de.heisluft.cli.simpleopt.option.OptionDescription;
-import org.jetbrains.annotations.Contract;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import java.util.*;
-import java.util.function.Supplier;
 
 import static de.heisluft.cli.simpleopt.OptionParseException.Reason.*;
 
@@ -34,10 +32,8 @@ public final class OptionParser {
    *
    * @param options the options to add
    */
-  @SafeVarargs
-  public final void addOptions(@NotNull Supplier<OptionDefinition<?>>... options) {
-    for(Supplier<OptionDefinition<?>> wrapper : options) {
-      OptionDefinition<?> option = wrapper.get();
+  public final void addOptions(@NotNull OptionDefinition<?>... options) {
+    for(OptionDefinition<?> option : options) {
       if(option.takesValue && option.valueConverter == null)
         throw new IllegalArgumentException("Option " + option.name + " has no value converter");
       optionDefinitions.add(option);
@@ -50,8 +46,8 @@ public final class OptionParser {
    * @param subcommands the collection of available subcommands. may be null or empty, indicating to
    * the parser that no subcommand matching shall be done
    */
-  public OptionParser(@Nullable List<SubCommand> subcommands) {
-    this.subcommands = Collections.unmodifiableList(subcommands == null ? Collections.emptyList() : new ArrayList<>(subcommands));
+  public OptionParser(@Nullable SubCommand... subcommands) {
+    this.subcommands = Collections.unmodifiableList(subcommands == null ? Collections.emptyList() : Arrays.asList(subcommands));
   }
 
   /**
@@ -70,9 +66,7 @@ public final class OptionParser {
    * twice, an option not having a value when it requires one or a grouping conflict.
    */
   @SuppressWarnings({"unchecked", "rawtypes"})
-  @NotNull
-  @Contract(pure = true, value = "_ -> new")
-  public OptionParseResult parse(@NotNull String... args) {
+  public @NotNull OptionParseResult parse(@NotNull String... args) {
     List<String> remainder = new ArrayList<>();
     Map<OptionDefinition<?>, Object> optionValues = new HashMap<>();
     String subcommand = null;
@@ -145,7 +139,7 @@ public final class OptionParser {
    *
    * @return the formatted help string.
    */
-  public String formatHelp(@Nullable String header) {
+  public @NotNull String formatHelp(@Nullable String header) {
     StringBuilder sb = header != null ? new StringBuilder(header).append('\n') : new StringBuilder();
     if(!subcommands.isEmpty()) {
       sb.append("Available subcommands:\n");

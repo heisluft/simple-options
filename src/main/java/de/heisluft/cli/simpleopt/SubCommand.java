@@ -6,10 +6,8 @@ import org.jetbrains.annotations.Nullable;
 import java.util.Objects;
 
 public final class SubCommand {
-  @NotNull
-  public final String name;
-  @NotNull
-  public final String description;
+  public final @NotNull String name;
+  public final @NotNull String description;
 
   public SubCommand(@Nullable String name, @Nullable String description) {
     if (name == null) throw new NullPointerException("name must not be null");

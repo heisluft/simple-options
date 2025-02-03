@@ -1,6 +1,5 @@
 package de.heisluft.cli.simpleopt.option;
 
-import org.jetbrains.annotations.Contract;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -19,57 +18,78 @@ import java.util.function.Function;
 public final class OptionDefinition<E> {
 
   /** The name of the option */
-  @NotNull
-  public final String name;
+  public final @NotNull String name;
   /** The shorthand of the option */
   public final char shorthand;
   /** If the Option takes a value, defined by the callback type supplied within the constructor */
   public final boolean takesValue;
   /** For valued options this callback is called if the option is set. The String argument contains the value */
-  @Nullable
-  public final Consumer<E> valueCallback;
-  /** For non-valued options this callback is called if the option is set. */
-  @Nullable
-  public final Runnable onDefinedCallBack;
-  @NotNull
-  public final OptionDescription description;
-  @Nullable
-  public final Function<String, E> valueConverter;
+  public final @Nullable Consumer<E> valueCallback;
+  /** This callback is called when the option is set. */
+  public final @Nullable Runnable onDefinedCallBack;
+  public final @NotNull OptionDescription description;
+  public final @Nullable Function<String, E> valueConverter;
 
-  @NotNull
-  @Contract(pure = true, value = "null,_ -> fail")
-  public static OptionDefinition<String> withArg(@Nullable String name,
+  public static @NotNull WithArgOptionBuilder<String> withArg(String name) {
+    return new WithArgOptionBuilder<>(name, String.class);
+  }
+
+  public static @NotNull WithArgOptionBuilder<String> withArg(@Nullable String name,
+      char shorthand) {
+    return new WithArgOptionBuilder<>(name, String.class).shorthand(shorthand);
+  }
+
+  public static @NotNull OptionDefinition<String> withArg(@Nullable String name,
       @Nullable Consumer<String> valueCallback) {
     return new WithArgOptionBuilder<>(name, String.class).callback(valueCallback).get();
   }
 
-  @NotNull
-  @Contract(pure = true, value = "null,_,_ -> fail")
-  public static OptionDefinition<String> withArg(@Nullable String name, char shorthand,
+  public static @NotNull OptionDefinition<String> withArg(@Nullable String name, char shorthand,
       @NotNull Consumer<String> valueCallback) {
     return new WithArgOptionBuilder<>(name, String.class).shorthand(shorthand)
         .callback(valueCallback).get();
   }
 
-  @NotNull
-  @Contract(pure = true, value = "null,_,_,_ -> fail")
-  public static <T> OptionDefinition<T> withArg(@Nullable String name, char shorthand,
+  public static <T> @NotNull WithArgOptionBuilder<T> withArg(String name, @NotNull Class<T> type) {
+    return new WithArgOptionBuilder<>(name, type);
+  }
+
+  public static <T> @NotNull WithArgOptionBuilder<T> withArg(String name, char shorthand,
+      @NotNull Class<T> type) {
+    return new WithArgOptionBuilder<>(name, type).shorthand(shorthand);
+  }
+
+  public static <T> @NotNull OptionDefinition<T> withArg(@Nullable String name,
+      @NotNull Class<T> type, @Nullable Consumer<T> valueCallback) {
+    return new WithArgOptionBuilder<>(name, type).callback(valueCallback).get();
+  }
+
+  public static <T> @NotNull OptionDefinition<T> withArg(@Nullable String name, char shorthand,
       @NotNull Class<T> type, @Nullable Consumer<T> valueCallback) {
     return new WithArgOptionBuilder<>(name, type).shorthand(shorthand).callback(valueCallback)
         .get();
   }
 
-  @NotNull
-  @Contract(pure = true, value = "null,_,_ -> fail")
-  public static <T> OptionDefinition<T> withArg(@Nullable String name, @NotNull Class<T> type,
-      @Nullable Consumer<T> valueCallback) {
-    return new WithArgOptionBuilder<>(name, type).callback(valueCallback).get();
+  public static @NotNull NonArgOptionBuilder nonArg(@Nullable String name) {
+    return new NonArgOptionBuilder(name);
   }
 
-  @NotNull
-  @Contract(pure = true, value = "null,_ -> fail")
-  public static <T> WithArgOptionBuilder<T> withArg(String name, @NotNull Class<T> type) {
-    return new WithArgOptionBuilder<>(name, type);
+  public static @NotNull NonArgOptionBuilder nonArg(@Nullable String name, char shorthand) {
+    return new NonArgOptionBuilder(name).shorthand(shorthand);
+  }
+
+  /**
+   * Defines an Option that does not take a value. The shorthand will be set to the first character
+   * of the long name.
+   *
+   * @param name
+   *     the options name
+   * @param onSetCallback
+   *     the callback to be run if the option is set
+   */
+  public static @NotNull OptionDefinition<Void> nonArg(@Nullable String name,
+      @Nullable Runnable onSetCallback) {
+    return new NonArgOptionBuilder(name).whenSet(onSetCallback).get();
   }
 
   /**
@@ -82,33 +102,9 @@ public final class OptionDefinition<E> {
    * @param onSetCallback
    *     the callback to be run if the option is set
    */
-  @NotNull
-  @Contract(pure = true, value = "null,_,_ -> fail")
-  public static OptionDefinition<Void> nonArg(@Nullable String name, char shorthand,
+  public static @NotNull OptionDefinition<Void> nonArg(@Nullable String name, char shorthand,
       @Nullable Runnable onSetCallback) {
     return new NonArgOptionBuilder(name).shorthand(shorthand).whenSet(onSetCallback).get();
-  }
-
-  /**
-   * Defines an Option that does not take a value. The shorthand will be set to the first character
-   * of the long name.
-   *
-   * @param name
-   *     the options name
-   * @param onSetCallback
-   *     the callback to be run if the option is set
-   */
-  @NotNull
-  @Contract(pure = true, value = "null,_ -> fail")
-  public static OptionDefinition<Void> nonArg(@Nullable String name,
-      @Nullable Runnable onSetCallback) {
-    return new NonArgOptionBuilder(name).whenSet(onSetCallback).get();
-  }
-
-  @NotNull
-  @Contract(pure = true, value = "null -> fail")
-  public static NonArgOptionBuilder nonArg(@Nullable String name) {
-    return new NonArgOptionBuilder(name);
   }
 
   OptionDefinition(@NotNull String name, char shorthand, @Nullable Runnable callback,

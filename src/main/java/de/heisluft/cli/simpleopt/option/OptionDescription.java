@@ -6,10 +6,8 @@ import org.jetbrains.annotations.Nullable;
 import java.util.Objects;
 
 public final class OptionDescription {
-  @NotNull
-  public final String text;
-  @NotNull
-  public final String argName;
+  public final @NotNull String text;
+  public final @NotNull String argName;
 
   public OptionDescription(@Nullable String text, @Nullable String argName) {
     this.text = text == null ? "" : text;
