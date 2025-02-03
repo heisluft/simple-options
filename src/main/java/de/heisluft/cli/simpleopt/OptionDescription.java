@@ -1,15 +1,15 @@
-package de.heisluft.cli.simpleopt.option;
+package de.heisluft.cli.simpleopt;
 
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import java.util.Objects;
 
-public final class OptionDescription {
-  public final @NotNull String text;
-  public final @NotNull String argName;
+final class OptionDescription {
+  final @NotNull String text;
+  final @NotNull String argName;
 
-  public OptionDescription(@Nullable String text, @Nullable String argName) {
+  OptionDescription(@Nullable String text, @Nullable String argName) {
     this.text = text == null ? "" : text;
     this.argName = argName == null ? "VALUE" : argName;
   }

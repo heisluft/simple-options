@@ -1,7 +1,5 @@
 package de.heisluft.cli.simpleopt;
 
-import de.heisluft.cli.simpleopt.option.OptionDefinition;
-import de.heisluft.cli.simpleopt.option.OptionDescription;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -68,7 +66,7 @@ public final class OptionParser {
   @SuppressWarnings({"unchecked", "rawtypes"})
   public @NotNull OptionParseResult parse(@NotNull String... args) {
     List<String> remainder = new ArrayList<>();
-    Map<OptionDefinition<?>, Object> optionValues = new HashMap<>();
+    Map<OptionDefinition, String> rawOptions = new HashMap<>();
     String subcommand = null;
     argLoop:
     for(int i = 0; i < args.length; i++) {
@@ -78,17 +76,13 @@ public final class OptionParser {
           if(arg.substring(2).startsWith(o.name)) {
             if(!o.takesValue) {
               if(!o.name.equals(arg.substring(2))) continue;
-              if(optionValues.containsKey(o)) throw new OptionParseException(DUPLICATE_OPTION, o.name);
-              if(o.onDefinedCallBack != null) o.onDefinedCallBack.run();
-              optionValues.put(o, true);
+              if(rawOptions.containsKey(o)) throw new OptionParseException(DUPLICATE_OPTION, o.name);
+              rawOptions.put(o, null);
             } else {
               String val = arg.substring(o.name.length() + 2);
               if(!val.startsWith("=") || val.length() == 1) throw new OptionParseException(MISSING_VALUE, o.name);
-              if(optionValues.containsKey(o)) throw new OptionParseException(DUPLICATE_OPTION, o.name);
-              Object value = o.valueConverter.apply(val.substring(1));
-              optionValues.put(o, value);
-              if(o.valueCallback != null) o.valueCallback.accept(value);
-              if(o.onDefinedCallBack != null) o.onDefinedCallBack.run();
+              if(rawOptions.containsKey(o)) throw new OptionParseException(DUPLICATE_OPTION, o.name);
+              rawOptions.put(o, val.substring(1));
             }
             continue argLoop;
           }
@@ -100,18 +94,13 @@ public final class OptionParser {
         for(char c : arg.substring(1).toCharArray()) {
           for(OptionDefinition o : optionDefinitions) {
             if(o.shorthand == c) {
-              if(optionValues.containsKey(o)) throw new OptionParseException(DUPLICATE_OPTION, o.name);
+              if(rawOptions.containsKey(o)) throw new OptionParseException(DUPLICATE_OPTION, o.name);
               if(o.takesValue) {
                 if(argumentDefined) throw new OptionParseException(ARG_GROUPING_CONFLICT, arg);
                 if(args.length == i + 1) throw new OptionParseException(MISSING_VALUE, o.name);
-                Object value = o.valueConverter.apply(args[++i]);
-                if(o.valueCallback != null) o.valueCallback.accept(value);
-                if(o.onDefinedCallBack != null) o.onDefinedCallBack.run();
+                rawOptions.put(o, args[++i]);
                 argumentDefined = true;
-              } else {
-                if(o.onDefinedCallBack != null) o.onDefinedCallBack.run();
-                optionValues.put(o, true);
-              }
+              } else rawOptions.put(o, null);
               continue charLoop;
             }
           }
@@ -127,7 +116,33 @@ public final class OptionParser {
         break;
       }
     }
+    Map<OptionDefinition<?>, Object> optionValues = new HashMap<>();
+    String finalSubcommand = subcommand;
+    rawOptions.forEach( (k, v) -> {
+      if(!k.validator.test(finalSubcommand)) {
+        System.out.println(("Option --" + k + " is not valid for command '" + finalSubcommand + "', ignoring."));
+        return;
+      }
+      if(k.onDefinedCallBack != null) k.onDefinedCallBack.run();
+      Object value = k.valueConverter != null ? k.valueConverter.apply(v) : v;
+      if(k.valueCallback != null) k.valueCallback.accept(value);
+      optionValues.put(k, v);
+    });
     return new OptionParseResult(optionValues, subcommand, remainder);
+  }
+
+  private static @NotNull StringBuilder wrapIndent(@NotNull StringBuilder out, int indent, int max) {
+    int remain = out.length();
+    int lastWrap = 0;
+    while(remain > max) {
+      int i = max + lastWrap;
+      while(out.charAt(i) != ' ') i--;
+      out.setCharAt(i, '\n');
+      for(int j = 0; j < indent; j++) out.insert(i + 1, ' ');
+      lastWrap = i;
+      remain = out.length() - lastWrap;
+    }
+    return out;
   }
 
   /**
@@ -139,12 +154,15 @@ public final class OptionParser {
    *
    * @return the formatted help string.
    */
-  public @NotNull String formatHelp(@Nullable String header) {
-    StringBuilder sb = header != null ? new StringBuilder(header).append('\n') : new StringBuilder();
+  public @NotNull String formatHelp(@Nullable String header, int maxWidth) {
+    StringBuilder sb = header != null && !header.isEmpty() ? new StringBuilder(header).append('\n')
+        : new StringBuilder();
     if(!subcommands.isEmpty()) {
       sb.append("Available subcommands:\n");
-      for(SubCommand sc : subcommands)
-        sb.append("  ").append(sc.name).append(":\n").append(sc.description).append("\n");
+      for(SubCommand sc : subcommands) {
+        sb.append("  ").append(sc.name).append(":\n")
+            .append(wrapIndent(new StringBuilder("    ").append(sc.description), 4, maxWidth)).append("\n");
+      }
     }
     sb.append("Options:\nOption");
     int maxLongLen = Math.max(optionDefinitions.stream().mapToInt(o -> 2 + o.name.length() + (o.takesValue ?  1 + o.description.argName.length() : 0)).max().orElse(0), "Option".length());
@@ -152,20 +170,23 @@ public final class OptionParser {
     for(int i = 0; i < maxLongLen + 2 - "Option".length(); i++) sb.append(' ');
     sb.append("Shorthand");
     for(int i = 0; i < maxShortLen + 2 - "Shorthand".length(); i++) sb.append(' ');
+    int descriptionIndent = sb.length() - sb.lastIndexOf("\n") - 1;
     sb.append("Description\n");
     List<OptionDefinition<?>> sorted = new ArrayList<>(optionDefinitions);
     sorted.sort(Comparator.comparing(s -> s.name));
     for(OptionDefinition<?> o : sorted) {
+      StringBuilder sb2 = new StringBuilder();
       OptionDescription desc = o.description;
-      sb.append("--").append(o.name);
+      sb2.append("--").append(o.name);
       int longLen = 2 + o.name.length() + (o.takesValue ? 1 + desc.argName.length() : 0);
-      if(o.takesValue) sb.append('=').append(desc.argName);
-      for(int j = 0; j < maxLongLen - longLen + 2; j++) sb.append(' ');
-      sb.append('-').append(o.shorthand);
-      if(o.takesValue) sb.append(' ').append(desc.argName);
+      if(o.takesValue) sb2.append('=').append(desc.argName);
+      for(int j = 0; j < maxLongLen - longLen + 2; j++) sb2.append(' ');
+      sb2.append('-').append(o.shorthand);
+      if(o.takesValue) sb2.append(' ').append(desc.argName);
       int shortLen = o.takesValue ? 3 + desc.argName.length() : 2;
-      for(int j = 0; j < maxShortLen - shortLen + 2; j++) sb.append(' ');
-      sb.append(desc.text).append("\n\n");
+      for(int j = 0; j < maxShortLen - shortLen + 2; j++) sb2.append(' ');
+      sb2.append(desc.text);
+      sb.append(wrapIndent(sb2, descriptionIndent, maxWidth)).append("\n\n");
     }
     return sb.toString();
   }

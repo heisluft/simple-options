@@ -1,6 +1,5 @@
 package de.heisluft.cli.simpleopt;
 
-import de.heisluft.cli.simpleopt.option.OptionDefinition;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 

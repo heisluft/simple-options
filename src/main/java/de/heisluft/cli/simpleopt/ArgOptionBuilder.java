@@ -1,4 +1,4 @@
-package de.heisluft.cli.simpleopt.option;
+package de.heisluft.cli.simpleopt;
 
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -13,7 +13,7 @@ import java.util.Map;
 import java.util.function.Consumer;
 import java.util.function.Function;
 
-public final class WithArgOptionBuilder<E> extends OptionBuilder<E, WithArgOptionBuilder<E>> {
+public final class ArgOptionBuilder<E> extends OptionBuilder<E, ArgOptionBuilder<E>> {
 
   /** The unmodifiable map of all default converters */
   private static final @NotNull Map<Class<?>, Function<String, ?>> DEFAULT_CONVERTERS;
@@ -35,7 +35,7 @@ public final class WithArgOptionBuilder<E> extends OptionBuilder<E, WithArgOptio
   private @Nullable Function<String, E> valueConverter;
   private @Nullable Consumer<E> valueCallback;
 
-  public WithArgOptionBuilder(@Nullable String name, @NotNull Class<E> type) {
+  public ArgOptionBuilder(@Nullable String name, @NotNull Class<E> type) {
     super(name);
     this.valueConverter = findConverter(type);
   }
@@ -54,20 +54,27 @@ public final class WithArgOptionBuilder<E> extends OptionBuilder<E, WithArgOptio
     return null;
   }
 
-  public @NotNull WithArgOptionBuilder<E> valueConverter(@Nullable Function<String, E> converter) {
+  public @NotNull ArgOptionBuilder<E> valueConverter(@Nullable Function<String, E> converter) {
     if(converter == null) throw new NullPointerException("converter cannot be null");
     this.valueConverter = converter;
     return this;
   }
 
-  public @NotNull WithArgOptionBuilder<E> callback(@Nullable Consumer<E> callback) {
+  public @NotNull ArgOptionBuilder<E> callback(@Nullable Consumer<E> callback) {
     this.valueCallback = callback;
     return this;
   }
 
   @Override
-  public @NotNull OptionDefinition<E> get() {
+  public @NotNull OptionDefinition<E> build() {
     if(valueConverter == null) throw new NullPointerException("value converter cannot be null");
-    return new OptionDefinition<>(name, shorthand != 0 ? shorthand : name.charAt(0), valueCallback, callback, valueConverter, description);
+    return new OptionDefinition<>(name, shorthand != 0 ? shorthand : name.charAt(0), valueCallback, callback, valueConverter, description, validator);
+  }
+
+  public @NotNull ArgOptionBuilder<E> description(@Nullable String description, @Nullable String valHelpName) {
+    if(description == null) throw new IllegalArgumentException("Option description cannot be null");
+    if(valHelpName == null) throw new IllegalArgumentException("Option value help name cannot be null");
+    this.description = new OptionDescription(description, valHelpName);
+    return this;
   }
 }
