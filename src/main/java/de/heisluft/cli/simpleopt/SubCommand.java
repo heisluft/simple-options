@@ -9,8 +9,7 @@ public final class SubCommand {
   public final @NotNull String name;
   public final @NotNull String description;
 
-  public SubCommand(@Nullable String name, @Nullable String description) {
-    if (name == null) throw new NullPointerException("name must not be null");
+  public SubCommand(@NotNull String name, @Nullable String description) {
     this.name = name;
     this.description = description == null ? "" : description;
   }
