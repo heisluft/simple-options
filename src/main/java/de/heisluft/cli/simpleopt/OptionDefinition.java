@@ -3,6 +3,7 @@ package de.heisluft.cli.simpleopt;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
+import java.util.Objects;
 import java.util.function.Consumer;
 import java.util.function.Function;
 import java.util.function.Predicate;
@@ -135,12 +136,17 @@ public final class OptionDefinition<E> {
   }
 
   @Override
-  public boolean equals(Object obj) {
-    return obj instanceof OptionDefinition && name.equals(((OptionDefinition<?>) obj).name);
+  public boolean equals(Object o) {
+    if(o == null || getClass() != o.getClass()) return false;
+    OptionDefinition<?> that = (OptionDefinition<?>) o;
+    return shorthand == that.shorthand &&
+        takesValue == that.takesValue &&
+        Objects.equals(name, that.name) &&
+        Objects.equals(description, that.description);
   }
 
   @Override
   public int hashCode() {
-    return name.hashCode();
+    return Objects.hash(name, shorthand, takesValue, description);
   }
 }
