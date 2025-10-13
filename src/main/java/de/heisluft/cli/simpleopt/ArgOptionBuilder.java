@@ -54,6 +54,15 @@ public final class ArgOptionBuilder<E> extends OptionBuilder<E, ArgOptionBuilder
     return null;
   }
 
+  @SuppressWarnings("unchecked")
+  public @NotNull <T> ArgOptionBuilder<T> mapValue(@NotNull Function<E, T> converter) {
+    if(this.valueCallback != null) throw new IllegalStateException("Value callback already set");
+    if(this.valueConverter == null) throw new IllegalStateException("Value converter not set");
+    ArgOptionBuilder<T> self = (ArgOptionBuilder<T>) this;
+    self.valueConverter = valueConverter.andThen(converter);
+    return self;
+  }
+
   public @NotNull ArgOptionBuilder<E> valueConverter(@Nullable Function<String, E> converter) {
     if(converter == null) throw new NullPointerException("converter cannot be null");
     this.valueConverter = converter;
