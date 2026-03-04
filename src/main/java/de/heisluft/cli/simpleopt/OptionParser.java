@@ -126,7 +126,7 @@ public final class OptionParser {
       if(k.onDefinedCallBack != null) k.onDefinedCallBack.run();
       Object value = k.valueConverter != null ? k.valueConverter.apply(v) : v;
       if(k.valueCallback != null) k.valueCallback.accept(value);
-      optionValues.put(k, v);
+      optionValues.put(k, value);
     });
     return new OptionParseResult(optionValues, subcommand, remainder);
   }
