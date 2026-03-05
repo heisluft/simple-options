@@ -1,4 +1,4 @@
-package de.heisluft.cli.simpleopt;
+package de.heisluft.cli.simplecli;
 
 import org.jetbrains.annotations.NotNull;
 

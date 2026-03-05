@@ -1,4 +1,4 @@
-package de.heisluft.cli.simpleopt;
+package de.heisluft.cli.simplecli;
 
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -6,7 +6,7 @@ import org.jetbrains.annotations.Nullable;
 import java.util.*;
 import java.util.function.Consumer;
 
-import static de.heisluft.cli.simpleopt.OptionParseException.Reason.*;
+import static de.heisluft.cli.simplecli.OptionParseException.Reason.*;
 
 /**
  * A simple Command Line Parser allowing both valued and unvalued options to be parsed by their
