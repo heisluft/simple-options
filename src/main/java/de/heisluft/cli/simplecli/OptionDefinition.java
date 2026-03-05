@@ -25,57 +25,57 @@ public final class OptionDefinition<E> {
   /** If the Option takes a value, defined by the callback type supplied within the constructor */
   public final boolean takesValue;
   /** For valued options this callback is called if the option is set. The String argument contains the value */
-  final Consumer<Object> valueCallback;
+  final @Nullable Consumer<Object> valueCallback;
   /** This callback is called when the option is set. */
   final @Nullable Runnable onDefinedCallBack;
   final @NotNull OptionDescription description;
   final @Nullable Function<String, E> valueConverter;
 
-  public static @NotNull ValueOptionBuilder<String> arg(String name) {
+  public static @NotNull ValueOptionBuilder<String> valued(@NotNull String name) {
     return new ValueOptionBuilder<>(name, String.class);
   }
 
-  public static @NotNull ValueOptionBuilder<String> arg(@Nullable String name,
+  public static @NotNull ValueOptionBuilder<String> valued(@NotNull String name,
       char shorthand) {
     return new ValueOptionBuilder<>(name, String.class).shorthand(shorthand);
   }
 
-  public static @NotNull OptionDefinition<String> arg(@Nullable String name,
+  public static @NotNull OptionDefinition<String> valued(@NotNull String name,
       @Nullable Consumer<String> valueCallback) {
     return new ValueOptionBuilder<>(name, String.class).callback(valueCallback).build();
   }
 
-  public static @NotNull OptionDefinition<String> arg(@Nullable String name, char shorthand,
+  public static @NotNull OptionDefinition<String> valued(@NotNull String name, char shorthand,
       @NotNull Consumer<String> valueCallback) {
     return new ValueOptionBuilder<>(name, String.class).shorthand(shorthand)
         .callback(valueCallback).build();
   }
 
-  public static <T> @NotNull ValueOptionBuilder<T> arg(String name, @NotNull Class<T> type) {
+  public static <T> @NotNull ValueOptionBuilder<T> valued(@NotNull String name, @NotNull Class<T> type) {
     return new ValueOptionBuilder<>(name, type);
   }
 
-  public static <T> @NotNull ValueOptionBuilder<T> arg(String name, char shorthand,
+  public static <T> @NotNull ValueOptionBuilder<T> valued(@NotNull String name, char shorthand,
       @NotNull Class<T> type) {
     return new ValueOptionBuilder<>(name, type).shorthand(shorthand);
   }
 
-  public static <T> @NotNull OptionDefinition<T> arg(@Nullable String name,
+  public static <T> @NotNull OptionDefinition<T> valued(@NotNull String name,
       @NotNull Class<T> type, @Nullable Consumer<T> valueCallback) {
     return new ValueOptionBuilder<>(name, type).callback(valueCallback).build();
   }
 
-  public static <T> @NotNull OptionDefinition<T> arg(@Nullable String name, char shorthand,
+  public static <T> @NotNull OptionDefinition<T> valued(@NotNull String name, char shorthand,
       @NotNull Class<T> type, @Nullable Consumer<T> valueCallback) {
     return new ValueOptionBuilder<>(name, type).shorthand(shorthand).callback(valueCallback)
         .build();
   }
 
-  public static @NotNull FlagOptionBuilder flag(@Nullable String name) {
+  public static @NotNull FlagOptionBuilder flag(@NotNull String name) {
     return new FlagOptionBuilder(name);
   }
 
-  public static @NotNull FlagOptionBuilder flag(@Nullable String name, char shorthand) {
+  public static @NotNull FlagOptionBuilder flag(@NotNull String name, char shorthand) {
     return new FlagOptionBuilder(name).shorthand(shorthand);
   }
 
@@ -88,7 +88,7 @@ public final class OptionDefinition<E> {
    * @param onSetCallback
    *     the callback to be run if the option is set
    */
-  public static @NotNull OptionDefinition<Void> flag(@Nullable String name,
+  public static @NotNull OptionDefinition<Void> flag(@NotNull String name,
       @Nullable Runnable onSetCallback) {
     return new FlagOptionBuilder(name).whenSet(onSetCallback).build();
   }
@@ -103,7 +103,7 @@ public final class OptionDefinition<E> {
    * @param onSetCallback
    *     the callback to be run if the option is set
    */
-  public static @NotNull OptionDefinition<Void> flag(@Nullable String name, char shorthand,
+  public static @NotNull OptionDefinition<Void> flag(@NotNull String name, char shorthand,
       @Nullable Runnable onSetCallback) {
     return new FlagOptionBuilder(name).shorthand(shorthand).whenSet(onSetCallback).build();
   }
@@ -120,7 +120,7 @@ public final class OptionDefinition<E> {
   }
 
   @SuppressWarnings({"rawtypes", "unchecked"})
-  OptionDefinition(@NotNull String name, char shorthand, Consumer valueCallback,
+  OptionDefinition(@NotNull String name, char shorthand, @Nullable Consumer valueCallback,
       @Nullable Runnable onDefinedCallBack, @NotNull Function<String, E> valueConverter,
       @NotNull OptionDescription description) {
     this.name = name;

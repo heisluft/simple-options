@@ -38,7 +38,8 @@ public class OptionParseException extends RuntimeException {
      */
     TRAILING_ARGUMENTS("Trailing arguments are not allowed: {0}"),
     MISSING_ARGUMENT("Command requires more arguments. Missing arguments: {0}"),
-    CONVERSION_ERROR("value '{0}' could not be converted for {1}: {2}")
+    CONVERSION_ERROR("Value '{0}' could not be converted for {1}: {2}"),
+    NULL_VALUE("Value '{0}' of {1} converted to null"),
     ;
     /**
      * The template for constructing an exception message. {@code {0}} is substituted for the

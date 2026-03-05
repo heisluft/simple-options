@@ -4,7 +4,8 @@ import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import java.util.*;
-import java.util.function.Consumer;
+import java.util.function.Predicate;
+import java.util.stream.Collectors;
 
 import static de.heisluft.cli.simplecli.OptionParseException.Reason.*;
 
@@ -17,6 +18,21 @@ import static de.heisluft.cli.simplecli.OptionParseException.Reason.*;
  * its subcommand set to the root command.
  */
 public final class OptionParser {
+  /** A filter matching the root command only. */
+  public static final Predicate<Command> ROOT_COMMAND = command -> command.isRoot;
+  /** A filter matching every command. */
+  public static final Predicate<Command> ALL_COMMANDS = command -> true;
+
+  /**
+   * Constructs a filter matching all commands whose names are in {@code names}.
+   *
+   * @param names the list of matched names
+   * @return the respective filter.
+   */
+  public static Predicate<Command> eachOf(String... names) {
+    return command -> Arrays.asList(names).contains(command.name);
+  }
+
   /** The set of all recognised commands. */
   private final @NotNull List<Command> namedCommands;
   /**
@@ -86,15 +102,40 @@ public final class OptionParser {
   }
 
   /**
-   * Act on all commands, including the root command.
-   *
-   * @param consumer the action to take on the commands.
+   * Get all commands, including the root command.
    *
    * @since 0.4.0
    */
-  public void forEachCommand(@NotNull Consumer<Command> consumer) {
-    namedCommands.forEach(consumer);
-    consumer.accept(rootCommand);
+  public Set<Command> getCommands() {
+    Set<Command> commands = new HashSet<>(namedCommands);
+    commands.add(rootCommand);
+    return commands;
+  }
+
+  /**
+   * Add options to all commands matching {@code filter}. For the general contract see
+   * {@link Command#addOptions(OptionDefinition...)}.
+   *
+   * @param filter the filter to apply
+   * @param options the options to add
+   */
+  public void addOptions(Predicate<Command> filter, OptionDefinition<?>... options) {
+    getCommands().forEach(command -> {
+      if(filter.test(command)) command.addOptions(options);
+    });
+  }
+
+  /**
+   * Add required arguments to all commands matching {@code filter}. For the general contract see
+   * {@link Command#addRequiredArgs(ArgDefinition...)}.
+   *
+   * @param filter the filter to apply
+   * @param requiredArgs the arguments to add
+   */
+  public void addRequiredArgs(Predicate<Command> filter, ArgDefinition<?>... requiredArgs) {
+    getCommands().forEach(command -> {
+      if(filter.test(command)) command.addRequiredArgs(requiredArgs);
+    });
   }
 
   /**
@@ -116,7 +157,7 @@ public final class OptionParser {
   public @NotNull OptionParseResult parse(@NotNull String... args) {
     List<String> remainder = new ArrayList<>();
     Set<OptionDefinition> allOptions = new HashSet<>();
-    forEachCommand(c -> allOptions.addAll(c.optionDefinitions));
+    getCommands().forEach(c -> allOptions.addAll(c.optionDefinitions));
     Map<OptionDefinition, String> rawOptions = new HashMap<>();
     Map<ArgDefinition<?>, Object> arguments = new HashMap<>();
     Command command = rootCommand;
@@ -175,8 +216,9 @@ public final class OptionParser {
               value = argDef.valueConverter != null ? argDef.valueConverter.apply(value) : value;
             } catch(Exception e) {
               throw new OptionParseException(CONVERSION_ERROR, value.toString(),
-                  "option --" + argDef.name, e);
+                  "argument " + argDef.name, e);
             }
+            if(value == null) throw new OptionParseException(NULL_VALUE, args[j], "argument " + argDef.name);
             arguments.put(argDef, value);
           } else remainder.add(args[j]);
         }
@@ -199,6 +241,7 @@ public final class OptionParser {
       } catch(Exception e) {
         throw new OptionParseException(CONVERSION_ERROR, v, "option --" + k.name, e);
       }
+      if(value == null && k.takesValue) throw new OptionParseException(NULL_VALUE, v, "option " + k.name);
       optionValues.put(k, value);
     });
     arguments.forEach((k, v) -> {
@@ -247,17 +290,21 @@ public final class OptionParser {
             .append(wrapIndent(new StringBuilder("    ").append(sc.description), 4, maxWidth)).append("\n");
       }
     }
+    List<OptionDefinition<?>> optionDefinitions = getCommands()
+        .stream()
+        .flatMap(c -> c.optionDefinitions.stream())
+        .distinct()
+        .sorted(Comparator.comparing(s -> s.name))
+        .collect(Collectors.toList());
     sb.append("Options:\nOption");
-    int maxLongLen = Math.max(rootCommand.optionDefinitions.stream().mapToInt(o -> 2 + o.name.length() + (o.takesValue ?  1 + o.description.argName.length() : 0)).max().orElse(0), "Option".length());
-    int maxShortLen = Math.max(rootCommand.optionDefinitions.stream().mapToInt(o -> o.takesValue ? 3 + o.description.argName.length() : 2).max().orElse(0), "Shorthand".length());
+    int maxLongLen = Math.max(optionDefinitions.stream().mapToInt(o -> 2 + o.name.length() + (o.takesValue ?  1 + o.description.argName.length() : 0)).max().orElse(0), "Option".length());
+    int maxShortLen = Math.max(optionDefinitions.stream().mapToInt(o -> o.takesValue ? 3 + o.description.argName.length() : 2).max().orElse(0), "Shorthand".length());
     for(int i = 0; i < maxLongLen + 2 - "Option".length(); i++) sb.append(' ');
     sb.append("Shorthand");
     for(int i = 0; i < maxShortLen + 2 - "Shorthand".length(); i++) sb.append(' ');
     int descriptionIndent = sb.length() - sb.lastIndexOf("\n") - 1;
     sb.append("Description\n");
-    List<OptionDefinition<?>> sorted = new ArrayList<>(rootCommand.optionDefinitions);
-    sorted.sort(Comparator.comparing(s -> s.name));
-    for(OptionDefinition<?> o : sorted) {
+    for(OptionDefinition<?> o : optionDefinitions) {
       StringBuilder sb2 = new StringBuilder();
       OptionDescription desc = o.description;
       sb2.append("--").append(o.name);

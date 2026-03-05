@@ -8,12 +8,13 @@ import java.util.HashSet;
 import java.util.List;
 import java.util.Objects;
 import java.util.Set;
-import java.util.function.Consumer;
+import java.util.function.Predicate;
 
 /**
  * Commands indicate what the program should do. There is always a root command, invoked if
  * no command was specified by the parsed argument string. Different commands may accept different
- * options. For adding an option to a set of commands, use {@link OptionParser#forEachCommand(Consumer)}.
+ * options. For adding an option to a set of commands, use
+ * {@link OptionParser#addOptions(Predicate, OptionDefinition[])}.
  *
  * @since 0.4.0
  */
@@ -69,7 +70,7 @@ public final class Command {
    *
    * @param args the non-null array of arguments to accept. All Elements must be non-null.
    */
-  public void addArguments(@NotNull ArgDefinition<?>... args) {
+  public void addRequiredArgs(@NotNull ArgDefinition<?>... args) {
     for(ArgDefinition<?> arg : args) {
       if(arg == null) throw new IllegalArgumentException("Argument cannot be null");
       if(arg.valueConverter == null) throw new IllegalArgumentException("Argument value converter cannot be null");

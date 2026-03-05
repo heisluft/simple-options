@@ -5,7 +5,7 @@ plugins {
 }
 
 group 'de.heisluft.cli'
-version '0.4.0-pre+3'
+version '0.4.0-pre+10'
 
 java {
   toolchain.languageVersion.set(JavaLanguageVersion.of(8))
@@ -25,7 +25,7 @@ tasks.withType(JavaCompile.class).configureEach {
     options.encoding = 'UTF-8'
 }
 
-jar.manifest.attributes.put("Automatic-Module-Name", "de.heisluft.simple-options")
+jar.manifest.attributes.put("Automatic-Module-Name", "de.heisluft.simple-cli")
 
 publishing {
     repositories.maven {

@@ -16,7 +16,7 @@ import java.util.Map;
 public final class OptionParseResult {
   /** The unmodifiable values of all set options. Never {@code null}. */
   final @NotNull Map<OptionDefinition<?>, Object> options;
-  final @NotNull Map<ArgDefinition<?>, Object> namedArgs;
+  final @NotNull Map<ArgDefinition<?>, Object> args;
   /** The matched subcommand, may be {@code null}. */
   public final @Nullable String subcommand;
   /**
@@ -37,7 +37,7 @@ public final class OptionParseResult {
   OptionParseResult(@NotNull Map<OptionDefinition<?>, Object> options, @NotNull Map<ArgDefinition<?>, Object> namedArgs, @Nullable String subcommand,
       @NotNull List<String> additional) {
     this.options = Collections.unmodifiableMap(options);
-    this.namedArgs = Collections.unmodifiableMap(namedArgs);
+    this.args = Collections.unmodifiableMap(namedArgs);
     this.subcommand = subcommand;
     this.additional = Collections.unmodifiableList(additional);
   }
@@ -49,16 +49,23 @@ public final class OptionParseResult {
    * @param option the option definition to query
    * @param <T> the type of the option value
    *
-   * @return the value of the option or {@code null} if the option did not have a parsed value.
+   * @return the value of the option. Never null.
    *
    * @since 0.1.0
    */
   @SuppressWarnings("unchecked")
-  public <T> @Nullable T getValue(@NotNull OptionDefinition<T> option) {
+  public <T> @NotNull T getValue(@NotNull OptionDefinition<T> option) {
     if(!options.containsKey(option)) throw new IllegalArgumentException("Option " + option.name + " was not set");
     if(!option.takesValue) throw new IllegalArgumentException("Option " + option.name + " does not take a value");
     return (T) options.get(option);
   }
+
+  @SuppressWarnings("unchecked")
+  public <T> @NotNull T getOrDefault(@NotNull OptionDefinition<T> option, @NotNull T defaultValue) {
+    if(!option.takesValue) throw new IllegalArgumentException("Option " + option.name + " does not take a value");
+    return options.containsKey(option) ? (T) options.get(option) : defaultValue;
+  }
+
   /**
    * Retrieves the parsed and converted value of a named argument.
    *
@@ -70,9 +77,14 @@ public final class OptionParseResult {
    * @since 0.4.0
    */
   @SuppressWarnings("unchecked")
-  public <T> @Nullable T getValue(@NotNull ArgDefinition<T> arg) {
-    if(!namedArgs.containsKey(arg)) throw new IllegalArgumentException("Option " + arg.name + " was not set");
-    return (T) namedArgs.get(arg);
+  public <T> @NotNull T getValue(@NotNull ArgDefinition<T> arg) {
+    if(!args.containsKey(arg)) throw new IllegalArgumentException("Option " + arg.name + " was not set");
+    return (T) args.get(arg);
+  }
+
+  @SuppressWarnings("unchecked")
+  public <T> @NotNull T getOrDefault(@NotNull ArgDefinition<T> arg, @NotNull T defaultValue) {
+    return args.containsKey(arg) ? (T) args.get(arg) : defaultValue;
   }
 
   /**
