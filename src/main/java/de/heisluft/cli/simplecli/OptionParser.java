@@ -3,11 +3,27 @@ package de.heisluft.cli.simplecli;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
-import java.util.*;
+import java.util.ArrayList;
+import java.util.Arrays;
+import java.util.Collections;
+import java.util.Comparator;
+import java.util.HashMap;
+import java.util.HashSet;
+import java.util.List;
+import java.util.Map;
+import java.util.Set;
 import java.util.function.Predicate;
 import java.util.stream.Collectors;
 
-import static de.heisluft.cli.simplecli.OptionParseException.Reason.*;
+import static de.heisluft.cli.simplecli.OptionParseException.Reason.ARG_GROUPING_CONFLICT;
+import static de.heisluft.cli.simplecli.OptionParseException.Reason.CONVERSION_ERROR;
+import static de.heisluft.cli.simplecli.OptionParseException.Reason.DUPLICATE_OPTION;
+import static de.heisluft.cli.simplecli.OptionParseException.Reason.INVALID_OPTION;
+import static de.heisluft.cli.simplecli.OptionParseException.Reason.MISSING_ARGUMENT;
+import static de.heisluft.cli.simplecli.OptionParseException.Reason.MISSING_VALUE;
+import static de.heisluft.cli.simplecli.OptionParseException.Reason.NO_MATCHING_COMMAND;
+import static de.heisluft.cli.simplecli.OptionParseException.Reason.NULL_VALUE;
+import static de.heisluft.cli.simplecli.OptionParseException.Reason.TRAILING_ARGUMENTS;
 
 /**
  * A simple Command Line Parser allowing both valued and unvalued options to be parsed by their
@@ -22,21 +38,12 @@ public final class OptionParser {
   public static final Predicate<Command> ROOT_COMMAND = command -> command.isRoot;
   /** A filter matching every command. */
   public static final Predicate<Command> ALL_COMMANDS = command -> true;
+  /** The amount of padding applied between each help column. */
+  private static final int PADDING = 2;
 
-  /**
-   * Constructs a filter matching all commands whose names are in {@code names}.
-   *
-   * @param names the list of matched names
-   * @return the respective filter.
-   */
-  public static Predicate<Command> eachOf(String... names) {
-    return command -> Arrays.asList(names).contains(command.name);
-  }
-
-  /** The set of all recognised commands. */
-  private final @NotNull List<Command> namedCommands;
   /**
    * The root command, used if no other command is given.
+   *
    * @since 0.4.0
    */
   public final @NotNull Command rootCommand;
@@ -44,6 +51,8 @@ public final class OptionParser {
    * Whether this parser is strict, i.e. whether trailing strings are disallowed.
    */
   public final boolean strict;
+  /** The set of all recognised commands. */
+  private final @NotNull List<Command> namedCommands;
 
   /**
    * Constructs a new, strict, OptionParser and hands to it a collection of available commands.
@@ -53,7 +62,7 @@ public final class OptionParser {
    * only the root command will exist.
    */
   public OptionParser(@Nullable Command... namedCommands) {
-    this(true, "",  namedCommands);
+    this(true, "", namedCommands);
   }
 
   /**
@@ -102,11 +111,23 @@ public final class OptionParser {
   }
 
   /**
+   * Constructs a filter matching all commands whose names are in {@code names}.
+   *
+   * @param names the list of matched names
+   * @return the respective filter.
+   */
+  public static Predicate<Command> eachOf(String... names) {
+    return command -> Arrays.asList(names).contains(command.name);
+  }
+
+  /**
    * Get all commands, including the root command.
+   *
+   * @return the set of all currently registered commands. Never null.
    *
    * @since 0.4.0
    */
-  public Set<Command> getCommands() {
+  public @NotNull Set<Command> getCommands() {
     Set<Command> commands = new HashSet<>(namedCommands);
     commands.add(rootCommand);
     return commands;
@@ -119,7 +140,7 @@ public final class OptionParser {
    * @param filter the filter to apply
    * @param options the options to add
    */
-  public void addOptions(Predicate<Command> filter, OptionDefinition<?>... options) {
+  public void addOptions(@NotNull Predicate<Command> filter, @NotNull OptionDefinition<?>... options) {
     getCommands().forEach(command -> {
       if(filter.test(command)) command.addOptions(options);
     });
@@ -132,7 +153,7 @@ public final class OptionParser {
    * @param filter the filter to apply
    * @param requiredArgs the arguments to add
    */
-  public void addRequiredArgs(Predicate<Command> filter, ArgDefinition<?>... requiredArgs) {
+  public void addRequiredArgs(@NotNull Predicate<Command> filter, @NotNull ArgDefinition<?>... requiredArgs) {
     getCommands().forEach(command -> {
       if(filter.test(command)) command.addRequiredArgs(requiredArgs);
     });
@@ -232,7 +253,7 @@ public final class OptionParser {
     }
     Map<OptionDefinition<?>, Object> optionValues = new HashMap<>();
     Command finalCommand = command;
-    rawOptions.forEach( (k, v) -> {
+    rawOptions.forEach((k, v) -> {
       if(!finalCommand.optionDefinitions.contains(k))
         throw new OptionParseException(INVALID_OPTION, "--" + k.name);
       Object value;
@@ -274,6 +295,7 @@ public final class OptionParser {
    * has been set.
    *
    * @param header An optional header message, not including a newline.
+   * @param maxWidth the maximum line width
    *
    * @return the formatted help string.
    *
@@ -297,11 +319,19 @@ public final class OptionParser {
         .sorted(Comparator.comparing(s -> s.name))
         .collect(Collectors.toList());
     sb.append("Options:\nOption");
-    int maxLongLen = Math.max(optionDefinitions.stream().mapToInt(o -> 2 + o.name.length() + (o.takesValue ?  1 + o.description.argName.length() : 0)).max().orElse(0), "Option".length());
-    int maxShortLen = Math.max(optionDefinitions.stream().mapToInt(o -> o.takesValue ? 3 + o.description.argName.length() : 2).max().orElse(0), "Shorthand".length());
-    for(int i = 0; i < maxLongLen + 2 - "Option".length(); i++) sb.append(' ');
+    int maxLongLen = Math.max(
+        optionDefinitions.stream()
+            .mapToInt(o -> 2 + o.name.length() + (o.takesValue ? 1 + o.description.argName.length() : 0))
+            .max().orElse(0),
+        "Option".length());
+    int maxShortLen = Math.max(
+        optionDefinitions.stream()
+            .mapToInt(o -> o.takesValue ? 3 + o.description.argName.length() : 2)
+            .max().orElse(0),
+        "Shorthand".length());
+    for(int i = 0; i < maxLongLen + PADDING - "Option".length(); i++) sb.append(' ');
     sb.append("Shorthand");
-    for(int i = 0; i < maxShortLen + 2 - "Shorthand".length(); i++) sb.append(' ');
+    for(int i = 0; i < maxShortLen + PADDING - "Shorthand".length(); i++) sb.append(' ');
     int descriptionIndent = sb.length() - sb.lastIndexOf("\n") - 1;
     sb.append("Description\n");
     for(OptionDefinition<?> o : optionDefinitions) {
@@ -310,11 +340,11 @@ public final class OptionParser {
       sb2.append("--").append(o.name);
       int longLen = 2 + o.name.length() + (o.takesValue ? 1 + desc.argName.length() : 0);
       if(o.takesValue) sb2.append('=').append(desc.argName);
-      for(int j = 0; j < maxLongLen - longLen + 2; j++) sb2.append(' ');
+      for(int j = 0; j < maxLongLen - longLen + PADDING; j++) sb2.append(' ');
       sb2.append('-').append(o.shorthand);
       if(o.takesValue) sb2.append(' ').append(desc.argName);
       int shortLen = o.takesValue ? 3 + desc.argName.length() : 2;
-      for(int j = 0; j < maxShortLen - shortLen + 2; j++) sb2.append(' ');
+      for(int j = 0; j < maxShortLen - shortLen + PADDING; j++) sb2.append(' ');
       sb2.append(desc.text);
       sb.append(wrapIndent(sb2, descriptionIndent, maxWidth)).append("\n\n");
     }

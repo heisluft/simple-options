@@ -19,16 +19,16 @@ import java.util.function.Predicate;
  * @since 0.4.0
  */
 public final class Command {
-  /** The set of all recognised options. */
-  final @NotNull Set<OptionDefinition<?>> optionDefinitions = new HashSet<>();
-  /** The set of all required arguments. */
-  final @NotNull List<ArgDefinition<?>> requiredArguments = new ArrayList<>();
   /** The name of the command. Empty for the root command. */
   public final @NotNull String name;
   /** The given description for help formatting. May be empty. */
   public final @NotNull String description;
   /** Whether this is a root command. */
   public final boolean isRoot;
+  /** The set of all recognised options. */
+  final @NotNull Set<OptionDefinition<?>> optionDefinitions = new HashSet<>();
+  /** The set of all required arguments. */
+  final @NotNull List<ArgDefinition<?>> requiredArguments = new ArrayList<>();
 
   /**
    * Construct a root command.

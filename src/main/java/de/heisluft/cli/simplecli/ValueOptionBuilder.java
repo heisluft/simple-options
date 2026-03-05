@@ -14,6 +14,7 @@ public final class ValueOptionBuilder<E> extends OptionBuilder<E, ValueOptionBui
     super(name);
     this.valueConverter = TypedBuilder.findConverter(type);
   }
+
   @SuppressWarnings("unchecked")
   public @NotNull <T> ValueOptionBuilder<T> mapValue(@NotNull Function<E, T> converter) {
     if(this.valueCallback != null) throw new IllegalStateException("Value callback already set");
@@ -37,7 +38,14 @@ public final class ValueOptionBuilder<E> extends OptionBuilder<E, ValueOptionBui
   @Override
   public @NotNull OptionDefinition<E> build() {
     if(valueConverter == null) throw new NullPointerException("value converter cannot be null");
-    return new OptionDefinition<>(name, shorthand != 0 ? shorthand : name.charAt(0), valueCallback, callback, valueConverter, description);
+    return new OptionDefinition<>(
+        name,
+        shorthand != 0 ? shorthand : name.charAt(0),
+        valueCallback,
+        callback,
+        valueConverter,
+        description
+    );
   }
 
   public @NotNull ValueOptionBuilder<E> description(@Nullable String description, @Nullable String valHelpName) {

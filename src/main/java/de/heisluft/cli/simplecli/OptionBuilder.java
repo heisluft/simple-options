@@ -16,21 +16,21 @@ public abstract class OptionBuilder<E, T extends OptionBuilder<E, T>> {
     this.name = name;
   }
 
-  public @NotNull T shorthand(char shorthand) {
+  public final @NotNull T shorthand(char shorthand) {
     if(shorthand == ' ') throw new IllegalArgumentException("Option shorthand cannot be a space");
     this.shorthand = shorthand;
     return (T) this;
   }
 
-  public @NotNull T whenSet(@Nullable Runnable callback) {
+  public final @NotNull T whenSet(@Nullable Runnable callback) {
     this.callback = callback;
     return (T) this;
   }
 
-  public @NotNull T description(@NotNull String description) {
+  public final @NotNull T description(@NotNull String description) {
     this.description = new OptionDescription(description, "VALUE");
     return (T) this;
   }
 
-  abstract @NotNull OptionDefinition<E> build();
+  public abstract @NotNull OptionDefinition<E> build();
 }

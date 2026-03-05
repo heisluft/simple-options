@@ -18,18 +18,42 @@ import java.util.function.Function;
 //TODO: document further
 public final class OptionDefinition<E> {
 
-  /** The name of the option */
+  /** The name of the option. */
   public final @NotNull String name;
-  /** The shorthand of the option */
+  /** The shorthand of the option. */
   public final char shorthand;
-  /** If the Option takes a value, defined by the callback type supplied within the constructor */
+  /** If the Option takes a value, defined by the callback type supplied within the constructor. */
   public final boolean takesValue;
-  /** For valued options this callback is called if the option is set. The String argument contains the value */
+  /** For valued options this callback is called if the option is set. The argument contains the value. */
   final @Nullable Consumer<Object> valueCallback;
   /** This callback is called when the option is set. */
   final @Nullable Runnable onDefinedCallBack;
   final @NotNull OptionDescription description;
   final @Nullable Function<String, E> valueConverter;
+
+  OptionDefinition(@NotNull String name, char shorthand, @Nullable Runnable callback,
+      @NotNull OptionDescription description) {
+    this.name = name;
+    this.shorthand = shorthand;
+    this.takesValue = false;
+    this.description = description;
+    this.onDefinedCallBack = callback;
+    this.valueCallback = null;
+    this.valueConverter = null;
+  }
+
+  @SuppressWarnings({"rawtypes", "unchecked"})
+  OptionDefinition(@NotNull String name, char shorthand, @Nullable Consumer valueCallback,
+      @Nullable Runnable onDefinedCallBack, @NotNull Function<String, E> valueConverter,
+      @NotNull OptionDescription description) {
+    this.name = name;
+    this.shorthand = shorthand;
+    this.takesValue = true;
+    this.onDefinedCallBack = onDefinedCallBack;
+    this.valueCallback = valueCallback;
+    this.valueConverter = valueConverter;
+    this.description = description;
+  }
 
   public static @NotNull ValueOptionBuilder<String> valued(@NotNull String name) {
     return new ValueOptionBuilder<>(name, String.class);
@@ -87,6 +111,8 @@ public final class OptionDefinition<E> {
    *     the options name
    * @param onSetCallback
    *     the callback to be run if the option is set
+   *
+   *  @return the resulting OptionDefinition
    */
   public static @NotNull OptionDefinition<Void> flag(@NotNull String name,
       @Nullable Runnable onSetCallback) {
@@ -94,7 +120,7 @@ public final class OptionDefinition<E> {
   }
 
   /**
-   * Defines an Option that does not take a value
+   * Defines an Option that does not take a value.
    *
    * @param name
    *     the options name
@@ -102,44 +128,22 @@ public final class OptionDefinition<E> {
    *     the options shorthand
    * @param onSetCallback
    *     the callback to be run if the option is set
+   *
+   * @return the resulting OptionDefinition
    */
   public static @NotNull OptionDefinition<Void> flag(@NotNull String name, char shorthand,
       @Nullable Runnable onSetCallback) {
     return new FlagOptionBuilder(name).shorthand(shorthand).whenSet(onSetCallback).build();
   }
 
-  OptionDefinition(@NotNull String name, char shorthand, @Nullable Runnable callback,
-      @NotNull OptionDescription description) {
-    this.name = name;
-    this.shorthand = shorthand;
-    this.takesValue = false;
-    this.description = description;
-    this.onDefinedCallBack = callback;
-    this.valueCallback = null;
-    this.valueConverter = null;
-  }
-
-  @SuppressWarnings({"rawtypes", "unchecked"})
-  OptionDefinition(@NotNull String name, char shorthand, @Nullable Consumer valueCallback,
-      @Nullable Runnable onDefinedCallBack, @NotNull Function<String, E> valueConverter,
-      @NotNull OptionDescription description) {
-    this.name = name;
-    this.shorthand = shorthand;
-    this.takesValue = true;
-    this.onDefinedCallBack = onDefinedCallBack;
-    this.valueCallback = valueCallback;
-    this.valueConverter = valueConverter;
-    this.description = description;
-  }
-
   @Override
   public boolean equals(@Nullable Object o) {
     if(o == null || getClass() != o.getClass()) return false;
     OptionDefinition<?> that = (OptionDefinition<?>) o;
-    return shorthand == that.shorthand &&
-        takesValue == that.takesValue &&
-        Objects.equals(name, that.name) &&
-        Objects.equals(description, that.description);
+    return shorthand == that.shorthand
+        && takesValue == that.takesValue
+        && name.equals(that.name)
+        && description.equals(that.description);
   }
 
   @Override

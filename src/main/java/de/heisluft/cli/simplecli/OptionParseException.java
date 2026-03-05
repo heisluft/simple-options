@@ -39,8 +39,8 @@ public class OptionParseException extends RuntimeException {
     TRAILING_ARGUMENTS("Trailing arguments are not allowed: {0}"),
     MISSING_ARGUMENT("Command requires more arguments. Missing arguments: {0}"),
     CONVERSION_ERROR("Value '{0}' could not be converted for {1}: {2}"),
-    NULL_VALUE("Value '{0}' of {1} converted to null"),
-    ;
+    NULL_VALUE("Value '{0}' of {1} converted to null");
+
     /**
      * The template for constructing an exception message. {@code {0}} is substituted for the
      * offending options long name.
@@ -55,7 +55,7 @@ public class OptionParseException extends RuntimeException {
      * {@link #getMessage(String, Object...)}, all further numbers are substituted with message
      * dependent context.
      */
-    private Reason(@NotNull String msgTemplate) {
+    Reason(@NotNull String msgTemplate) {
       this.msgTemplate = msgTemplate;
     }
 
@@ -64,18 +64,20 @@ public class OptionParseException extends RuntimeException {
      * string. The pattern {@code {0}} of the template is substituted with the input string.
      *
      * @param offender a string representation of the offending entity.
+     * @param context optional context. this is only for message formatting and will not be stored.
      *
      * @return the error message string.
      */
-    private @NotNull String getMessage(@NotNull String offender, @NotNull Object... args) {
+    private @NotNull String getMessage(@NotNull String offender, @NotNull Object... context) {
       String msg = msgTemplate.replace("{0}", offender);
-      for(int i = 0; i < args.length; i++) {
-        Object arg = args[i];
+      for(int i = 0; i < context.length; i++) {
+        Object arg = context[i];
         msg = msg.replace("{" + (i + 1) + "}", arg.toString());
       }
       return msg;
     }
   }
+
   /** The reason why parsing failed. */
   public final @NotNull Reason reason;
   /**

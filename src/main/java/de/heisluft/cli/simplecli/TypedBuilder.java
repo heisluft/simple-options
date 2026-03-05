@@ -14,8 +14,8 @@ import java.util.function.Function;
 
 interface TypedBuilder {
 
-  /** The unmodifiable map of all default converters */
-  static @NotNull Map<Class<?>, Function<String, ?>> DEFAULT_CONVERTERS = getDefaultConverters();
+  /** The unmodifiable map of all default converters. */
+  @NotNull Map<Class<?>, Function<String, ?>> DEFAULT_CONVERTERS = getDefaultConverters();
 
   static Map<Class<?>, Function<String, ?>> getDefaultConverters() {
     Map<Class<?>, Function<String, ?>> converters = new HashMap<>();
