@@ -10,7 +10,7 @@ public final class ValueOptionBuilder<E> extends OptionBuilder<E, ValueOptionBui
   private @Nullable Function<String, E> valueConverter;
   private @Nullable Consumer<E> valueCallback;
 
-  public ValueOptionBuilder(@NotNull String name, @NotNull Class<E> type) {
+  ValueOptionBuilder(@NotNull String name, @NotNull Class<E> type) {
     super(name);
     this.valueConverter = TypedBuilder.findConverter(type);
   }

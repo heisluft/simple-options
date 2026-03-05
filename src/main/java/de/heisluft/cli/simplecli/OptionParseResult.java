@@ -64,6 +64,19 @@ public final class OptionParseResult {
     return (T) options.get(option);
   }
 
+  /**
+   * Retrieves the parsed and converted value of an option, failing for options that do not take
+   * values. Takes a default value if the option was not set.
+   *
+   * @param option the option definition to query
+   * @param defaultValue the default to be returned if the option was not set
+   *
+   * @param <T> the type of the option value
+   *
+   * @return the value of the option. Never null.
+   *
+   * @since 0.1.0
+   */
   @SuppressWarnings("unchecked")
   public <T> @NotNull T getOption(@NotNull OptionDefinition<T> option, @NotNull T defaultValue) {
     if(!option.takesValue) throw new IllegalArgumentException("Option " + option.name + " does not take a value");
@@ -71,7 +84,8 @@ public final class OptionParseResult {
   }
 
   /**
-   * Retrieves the parsed and converted value of a named argument.
+   * Retrieves the parsed and converted value of a named argument, failing
+   * for arguments which have not been registered for the current command.
    *
    * @param arg the argument definition to query
    * @param <T> the type of the argument value
@@ -82,13 +96,9 @@ public final class OptionParseResult {
    */
   @SuppressWarnings("unchecked")
   public <T> @NotNull T getArg(@NotNull ArgDefinition<T> arg) {
-    if(!args.containsKey(arg)) throw new IllegalArgumentException("Option " + arg.name + " was not set");
+    if(!args.containsKey(arg)) throw new IllegalArgumentException("Argument " + arg.name
+        + " is not registered for the given command");
     return (T) args.get(arg);
-  }
-
-  @SuppressWarnings("unchecked")
-  public <T> @NotNull T getArg(@NotNull ArgDefinition<T> arg, @NotNull T defaultValue) {
-    return args.containsKey(arg) ? (T) args.get(arg) : defaultValue;
   }
 
   /**

@@ -2,9 +2,18 @@ package de.heisluft.cli.simplecli;
 
 import org.jetbrains.annotations.NotNull;
 
+/**
+ * This Builder class builds an OptionDefinition which does not take a value. All methods mutate the builder.
+ * Instances can be obtained by invoking the "flag" methods within {@link OptionDefinition}.
+ */
 public final class FlagOptionBuilder extends OptionBuilder<Void, FlagOptionBuilder> {
 
-  public FlagOptionBuilder(@NotNull String name) {
+  /**
+   * This internal constructor sets the final name.
+   *
+   * @param name the final, not-null name of the resulting option
+   */
+  FlagOptionBuilder(@NotNull String name) {
     super(name);
   }
 
