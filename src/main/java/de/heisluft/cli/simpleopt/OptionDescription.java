@@ -15,7 +15,7 @@ final class OptionDescription {
   }
 
   @Override
-  public boolean equals(Object o) {
+  public boolean equals(@Nullable Object o) {
     if(o == null || getClass() != o.getClass()) return false;
     OptionDescription that = (OptionDescription) o;
     return Objects.equals(text, that.text) && Objects.equals(argName, that.argName);

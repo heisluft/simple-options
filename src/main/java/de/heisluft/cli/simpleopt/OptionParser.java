@@ -4,6 +4,7 @@ import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import java.util.*;
+import java.util.function.Consumer;
 
 import static de.heisluft.cli.simpleopt.OptionParseException.Reason.*;
 
@@ -13,39 +14,87 @@ import static de.heisluft.cli.simpleopt.OptionParseException.Reason.*;
  * chaining is supported. Users of the API have the option to declare a set of recognized subcommands
  * to the parser, which the parser will then validate the arg string against. Note: if the subcommand
  * set is empty or the parsed argument array does not contain a subcommand, the ParseResult will have
- * its subcommand set to {@code null.}
- *
- * @since 0.0.1
+ * its subcommand set to the root command.
  */
 public final class OptionParser {
-  /** The set of all recognised options. */
-  @NotNull
-  private final Set<OptionDefinition<?>> optionDefinitions = new HashSet<>();
-  /** The set of all recognised subcommands. */
-  @NotNull
-  private final List<SubCommand> subcommands;
+  /** The set of all recognised commands. */
+  private final @NotNull List<Command> namedCommands;
+  /**
+   * The root command, used if no other command is given.
+   * @since 0.4.0
+   */
+  public final @NotNull Command rootCommand;
+  /**
+   * Whether this parser is strict, i.e. whether trailing strings are disallowed.
+   */
+  public final boolean strict;
 
   /**
-   * Add Option definitions to the set of recognized options.
+   * Constructs a new, strict, OptionParser and hands to it a collection of available commands.
+   * The root command will not have a description.
    *
-   * @param options the options to add
+   * @param namedCommands the collection of available commands. may be null or empty, in which case
+   * only the root command will exist.
    */
-  public final void addOptions(@NotNull OptionDefinition<?>... options) {
-    for(OptionDefinition<?> option : options) {
-      if(option.takesValue && option.valueConverter == null)
-        throw new IllegalArgumentException("Option " + option.name + " has no value converter");
-      optionDefinitions.add(option);
-    }
+  public OptionParser(@Nullable Command... namedCommands) {
+    this(true, "",  namedCommands);
   }
 
   /**
-   * Constructs a new OptionParser and hands to it a collection of available subcommands.
+   * Constructs a new, strict, OptionParser and hands to it a collection of available commands.
+   * The root command will not have a description.
    *
-   * @param subcommands the collection of available subcommands. may be null or empty, indicating to
-   * the parser that no subcommand matching shall be done
+   * @param strict set to true if trailing arguments should error.
+   * @param namedCommands the collection of available commands. may be null or empty, in which case
+   * only the root command will exist.
+   *
+   * @since 0.4.0
    */
-  public OptionParser(@Nullable SubCommand... subcommands) {
-    this.subcommands = Collections.unmodifiableList(subcommands == null ? Collections.emptyList() : Arrays.asList(subcommands));
+  public OptionParser(boolean strict, @Nullable Command... namedCommands) {
+    this(strict, "", namedCommands);
+  }
+
+  /**
+   * Constructs a new, strict, OptionParser and hands to it a collection of available commands.
+   *
+   * @param rootDescription the non-null description of the root command, for help formatting.
+   * @param namedCommands the collection of available commands. may be null or empty, in which case
+   * only the root command will exist.
+   *
+   * @since 0.4.0
+   */
+  public OptionParser(String rootDescription, @NotNull Command... namedCommands) {
+    this(true, rootDescription, namedCommands);
+  }
+
+  /**
+   * Constructs a new OptionParser and hands to it a collection of available commands.
+   *
+   * @param strict set to true if trailing arguments should error.
+   * @param rootDescription the non-null description of the root command, for help formatting.
+   * @param namedCommands the collection of available commands. may be null or empty, in which case
+   * only the root command will exist.
+   *
+   * @since 0.4.0
+   */
+  public OptionParser(boolean strict, @NotNull String rootDescription, @Nullable Command... namedCommands) {
+    this.namedCommands = Collections.unmodifiableList(
+        namedCommands == null ? Collections.emptyList() : Arrays.asList(namedCommands)
+    );
+    rootCommand = new Command(rootDescription);
+    this.strict = strict;
+  }
+
+  /**
+   * Act on all commands, including the root command.
+   *
+   * @param consumer the action to take on the commands.
+   *
+   * @since 0.4.0
+   */
+  public void forEachCommand(@NotNull Consumer<Command> consumer) {
+    namedCommands.forEach(consumer);
+    consumer.accept(rootCommand);
   }
 
   /**
@@ -66,13 +115,15 @@ public final class OptionParser {
   @SuppressWarnings({"unchecked", "rawtypes"})
   public @NotNull OptionParseResult parse(@NotNull String... args) {
     List<String> remainder = new ArrayList<>();
+    Set<OptionDefinition> allOptions = new HashSet<>();
+    forEachCommand(c -> allOptions.addAll(c.optionDefinitions));
     Map<OptionDefinition, String> rawOptions = new HashMap<>();
-    String subcommand = null;
+    Command command = rootCommand;
     argLoop:
     for(int i = 0; i < args.length; i++) {
       String arg = args[i];
       if(arg.startsWith("--")) {
-        for(OptionDefinition o : optionDefinitions) {
+        for(OptionDefinition o : allOptions) {
           if(arg.substring(2).startsWith(o.name)) {
             if(!o.takesValue) {
               if(!o.name.equals(arg.substring(2))) continue;
@@ -87,12 +138,12 @@ public final class OptionParser {
             continue argLoop;
           }
         }
-        System.out.println("Unknown long option supplied: '--" + arg + "'");
+        throw new OptionParseException(INVALID_OPTION, "--" + arg);
       } else if(arg.startsWith("-")) {
         boolean argumentDefined = false;
         charLoop:
         for(char c : arg.substring(1).toCharArray()) {
-          for(OptionDefinition o : optionDefinitions) {
+          for(OptionDefinition o : allOptions) {
             if(o.shorthand == c) {
               if(rawOptions.containsKey(o)) throw new OptionParseException(DUPLICATE_OPTION, o.name);
               if(o.takesValue) {
@@ -104,31 +155,36 @@ public final class OptionParser {
               continue charLoop;
             }
           }
-          System.out.println("Unknown short option supplied: '-" + c + "'");
+          throw new OptionParseException(INVALID_OPTION, "-" + c);
         }
       } else {
-        if(!subcommands.isEmpty()) {
-          if(!subcommands.contains(new SubCommand(arg, null))) throw new OptionParseException(NO_MATCHING_SUBCOMMAND, arg);
-          subcommand = arg;
+        if(!namedCommands.isEmpty()) {
+          Command c = namedCommands.stream()
+              .filter(cmd -> cmd.name.equals(arg))
+              .findFirst().orElse(null);
+          if(c == null) throw new OptionParseException(NO_MATCHING_COMMAND, arg);
+          command = c;
         }
-        for(int j = i + (subcommands.isEmpty() ? 0 : 1); j < args.length; j++) remainder.add(args[j]);
+        for(int j = i + (namedCommands.isEmpty() ? 0 : 1); j < args.length; j++) remainder.add(args[j]);
+        if(strict && !remainder.isEmpty())
+          throw new OptionParseException(TRAILING_ARGUMENTS, remainder.toString());
         // arg chain is supposed to be continuous
         break;
       }
     }
     Map<OptionDefinition<?>, Object> optionValues = new HashMap<>();
-    String finalSubcommand = subcommand;
+    Command finalCommand = command;
     rawOptions.forEach( (k, v) -> {
-      if(!k.validator.test(finalSubcommand)) {
-        System.out.println(("Option --" + k + " is not valid for command '" + finalSubcommand + "', ignoring."));
-        return;
-      }
-      if(k.onDefinedCallBack != null) k.onDefinedCallBack.run();
+      if(!finalCommand.optionDefinitions.contains(k))
+        throw new OptionParseException(INVALID_OPTION, "--" + k.name);
       Object value = k.valueConverter != null ? k.valueConverter.apply(v) : v;
-      if(k.valueCallback != null) k.valueCallback.accept(value);
       optionValues.put(k, value);
     });
-    return new OptionParseResult(optionValues, subcommand, remainder);
+    optionValues.forEach((k, v) -> {
+      if(k.onDefinedCallBack != null) k.onDefinedCallBack.run();
+      if(k.valueCallback != null) k.valueCallback.accept(v);
+    });
+    return new OptionParseResult(optionValues, command.isRoot ? null : command.name, remainder);
   }
 
   private static @NotNull StringBuilder wrapIndent(@NotNull StringBuilder out, int indent, int max) {
@@ -153,26 +209,29 @@ public final class OptionParser {
    * @param header An optional header message, not including a newline.
    *
    * @return the formatted help string.
+   *
+   * @since 0.3.0
    */
+  // TODO: Think of root command description meaning as well as computation of "valid for" appendices.
   public @NotNull String formatHelp(@Nullable String header, int maxWidth) {
     StringBuilder sb = header != null && !header.isEmpty() ? new StringBuilder(header).append('\n')
         : new StringBuilder();
-    if(!subcommands.isEmpty()) {
-      sb.append("Available subcommands:\n");
-      for(SubCommand sc : subcommands) {
+    if(!namedCommands.isEmpty()) {
+      sb.append("Available commands:\n");
+      for(Command sc : namedCommands) {
         sb.append("  ").append(sc.name).append(":\n")
             .append(wrapIndent(new StringBuilder("    ").append(sc.description), 4, maxWidth)).append("\n");
       }
     }
     sb.append("Options:\nOption");
-    int maxLongLen = Math.max(optionDefinitions.stream().mapToInt(o -> 2 + o.name.length() + (o.takesValue ?  1 + o.description.argName.length() : 0)).max().orElse(0), "Option".length());
-    int maxShortLen = Math.max(optionDefinitions.stream().mapToInt(o -> o.takesValue ? 3 + o.description.argName.length() : 2).max().orElse(0), "Shorthand".length());
+    int maxLongLen = Math.max(rootCommand.optionDefinitions.stream().mapToInt(o -> 2 + o.name.length() + (o.takesValue ?  1 + o.description.argName.length() : 0)).max().orElse(0), "Option".length());
+    int maxShortLen = Math.max(rootCommand.optionDefinitions.stream().mapToInt(o -> o.takesValue ? 3 + o.description.argName.length() : 2).max().orElse(0), "Shorthand".length());
     for(int i = 0; i < maxLongLen + 2 - "Option".length(); i++) sb.append(' ');
     sb.append("Shorthand");
     for(int i = 0; i < maxShortLen + 2 - "Shorthand".length(); i++) sb.append(' ');
     int descriptionIndent = sb.length() - sb.lastIndexOf("\n") - 1;
     sb.append("Description\n");
-    List<OptionDefinition<?>> sorted = new ArrayList<>(optionDefinitions);
+    List<OptionDefinition<?>> sorted = new ArrayList<>(rootCommand.optionDefinitions);
     sorted.sort(Comparator.comparing(s -> s.name));
     for(OptionDefinition<?> o : sorted) {
       StringBuilder sb2 = new StringBuilder();

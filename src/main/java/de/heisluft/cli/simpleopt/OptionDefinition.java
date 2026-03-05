@@ -6,7 +6,6 @@ import org.jetbrains.annotations.Nullable;
 import java.util.Objects;
 import java.util.function.Consumer;
 import java.util.function.Function;
-import java.util.function.Predicate;
 
 /**
  * An OptionDefinition represents a CLI option, consisting of its name, shorthand and its callback
@@ -26,12 +25,11 @@ public final class OptionDefinition<E> {
   /** If the Option takes a value, defined by the callback type supplied within the constructor */
   public final boolean takesValue;
   /** For valued options this callback is called if the option is set. The String argument contains the value */
-  final @Nullable Consumer<E> valueCallback;
+  final Consumer<Object> valueCallback;
   /** This callback is called when the option is set. */
   final @Nullable Runnable onDefinedCallBack;
   final @NotNull OptionDescription description;
   final @Nullable Function<String, E> valueConverter;
-  final @NotNull Predicate<String> validator;
 
   public static @NotNull ArgOptionBuilder<String> arg(String name) {
     return new ArgOptionBuilder<>(name, String.class);
@@ -111,7 +109,7 @@ public final class OptionDefinition<E> {
   }
 
   OptionDefinition(@NotNull String name, char shorthand, @Nullable Runnable callback,
-      @NotNull OptionDescription description, @NotNull Predicate<String> validator) {
+      @NotNull OptionDescription description) {
     this.name = name;
     this.shorthand = shorthand;
     this.takesValue = false;
@@ -119,12 +117,12 @@ public final class OptionDefinition<E> {
     this.onDefinedCallBack = callback;
     this.valueCallback = null;
     this.valueConverter = null;
-    this.validator = validator;
   }
 
-  OptionDefinition(@NotNull String name, char shorthand, @Nullable Consumer<E> valueCallback,
+  @SuppressWarnings({"rawtypes", "unchecked"})
+  OptionDefinition(@NotNull String name, char shorthand, Consumer valueCallback,
       @Nullable Runnable onDefinedCallBack, @NotNull Function<String, E> valueConverter,
-      @NotNull OptionDescription description, @NotNull Predicate<String> validator) {
+      @NotNull OptionDescription description) {
     this.name = name;
     this.shorthand = shorthand;
     this.takesValue = true;
@@ -132,11 +130,10 @@ public final class OptionDefinition<E> {
     this.valueCallback = valueCallback;
     this.valueConverter = valueConverter;
     this.description = description;
-    this.validator = validator;
   }
 
   @Override
-  public boolean equals(Object o) {
+  public boolean equals(@Nullable Object o) {
     if(o == null || getClass() != o.getClass()) return false;
     OptionDefinition<?> that = (OptionDefinition<?>) o;
     return shorthand == that.shorthand &&

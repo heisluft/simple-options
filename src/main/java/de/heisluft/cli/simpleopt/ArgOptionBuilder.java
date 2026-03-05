@@ -77,7 +77,7 @@ public final class ArgOptionBuilder<E> extends OptionBuilder<E, ArgOptionBuilder
   @Override
   public @NotNull OptionDefinition<E> build() {
     if(valueConverter == null) throw new NullPointerException("value converter cannot be null");
-    return new OptionDefinition<>(name, shorthand != 0 ? shorthand : name.charAt(0), valueCallback, callback, valueConverter, description, validator);
+    return new OptionDefinition<>(name, shorthand != 0 ? shorthand : name.charAt(0), valueCallback, callback, valueConverter, description);
   }
 
   public @NotNull ArgOptionBuilder<E> description(@Nullable String description, @Nullable String valHelpName) {

@@ -20,11 +20,23 @@ public class OptionParseException extends RuntimeException {
     /** Multiple options declaring consumption of a value defined in same short option grouping. */
     ARG_GROUPING_CONFLICT("Multiple options with required arguments defined in the same group '{0}'"),
     /**
-     * The given subcommand is not recognized by this parser.
+     * The given command is not recognized by this parser.
      *
-     * @since 0.2.0
+     * @since 0.4.0
      */
-    NO_MATCHING_SUBCOMMAND("'{0}' is not a valid subcommand");
+    NO_MATCHING_COMMAND("'{0}' is not a valid command"),
+    /**
+     * The given command does not accept the given option.
+     *
+     * @since 0.4.0
+     */
+    INVALID_OPTION("'{0}' is not a valid option for the given command"),
+    /**
+     * If strict parsing is enabled, trailing strings on the command line error.
+     *
+     * @since 0.4.0
+     */
+    TRAILING_ARGUMENTS("Trailing arguments are not allowed: {0}");
     /**
      * The template for constructing an exception message. {@code {0}} is substituted for the
      * offending options long name.
