@@ -31,43 +31,43 @@ public final class OptionDefinition<E> {
   final @NotNull OptionDescription description;
   final @Nullable Function<String, E> valueConverter;
 
-  public static @NotNull ArgOptionBuilder<String> arg(String name) {
-    return new ArgOptionBuilder<>(name, String.class);
+  public static @NotNull ValueOptionBuilder<String> arg(String name) {
+    return new ValueOptionBuilder<>(name, String.class);
   }
 
-  public static @NotNull ArgOptionBuilder<String> arg(@Nullable String name,
+  public static @NotNull ValueOptionBuilder<String> arg(@Nullable String name,
       char shorthand) {
-    return new ArgOptionBuilder<>(name, String.class).shorthand(shorthand);
+    return new ValueOptionBuilder<>(name, String.class).shorthand(shorthand);
   }
 
   public static @NotNull OptionDefinition<String> arg(@Nullable String name,
       @Nullable Consumer<String> valueCallback) {
-    return new ArgOptionBuilder<>(name, String.class).callback(valueCallback).build();
+    return new ValueOptionBuilder<>(name, String.class).callback(valueCallback).build();
   }
 
   public static @NotNull OptionDefinition<String> arg(@Nullable String name, char shorthand,
       @NotNull Consumer<String> valueCallback) {
-    return new ArgOptionBuilder<>(name, String.class).shorthand(shorthand)
+    return new ValueOptionBuilder<>(name, String.class).shorthand(shorthand)
         .callback(valueCallback).build();
   }
 
-  public static <T> @NotNull ArgOptionBuilder<T> arg(String name, @NotNull Class<T> type) {
-    return new ArgOptionBuilder<>(name, type);
+  public static <T> @NotNull ValueOptionBuilder<T> arg(String name, @NotNull Class<T> type) {
+    return new ValueOptionBuilder<>(name, type);
   }
 
-  public static <T> @NotNull ArgOptionBuilder<T> arg(String name, char shorthand,
+  public static <T> @NotNull ValueOptionBuilder<T> arg(String name, char shorthand,
       @NotNull Class<T> type) {
-    return new ArgOptionBuilder<>(name, type).shorthand(shorthand);
+    return new ValueOptionBuilder<>(name, type).shorthand(shorthand);
   }
 
   public static <T> @NotNull OptionDefinition<T> arg(@Nullable String name,
       @NotNull Class<T> type, @Nullable Consumer<T> valueCallback) {
-    return new ArgOptionBuilder<>(name, type).callback(valueCallback).build();
+    return new ValueOptionBuilder<>(name, type).callback(valueCallback).build();
   }
 
   public static <T> @NotNull OptionDefinition<T> arg(@Nullable String name, char shorthand,
       @NotNull Class<T> type, @Nullable Consumer<T> valueCallback) {
-    return new ArgOptionBuilder<>(name, type).shorthand(shorthand).callback(valueCallback)
+    return new ValueOptionBuilder<>(name, type).shorthand(shorthand).callback(valueCallback)
         .build();
   }
 

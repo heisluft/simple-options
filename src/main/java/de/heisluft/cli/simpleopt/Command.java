@@ -3,7 +3,9 @@ package de.heisluft.cli.simpleopt;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
+import java.util.ArrayList;
 import java.util.HashSet;
+import java.util.List;
 import java.util.Objects;
 import java.util.Set;
 import java.util.function.Consumer;
@@ -12,10 +14,14 @@ import java.util.function.Consumer;
  * Commands indicate what the program should do. There is always a root command, invoked if
  * no command was specified by the parsed argument string. Different commands may accept different
  * options. For adding an option to a set of commands, use {@link OptionParser#forEachCommand(Consumer)}.
+ *
+ * @since 0.4.0
  */
 public final class Command {
   /** The set of all recognised options. */
   final @NotNull Set<OptionDefinition<?>> optionDefinitions = new HashSet<>();
+  /** The set of all required arguments. */
+  final @NotNull List<ArgDefinition<?>> requiredArguments = new ArrayList<>();
   /** The name of the command. Empty for the root command. */
   public final @NotNull String name;
   /** The given description for help formatting. May be empty. */
@@ -55,6 +61,20 @@ public final class Command {
   @Override
   public int hashCode() {
     return Objects.hash(name);
+  }
+
+  /**
+   * Makes this command require all the given arguments in the given order.
+   * No arguments in the array may be null.
+   *
+   * @param args the non-null array of arguments to accept. All Elements must be non-null.
+   */
+  public void addArguments(@NotNull ArgDefinition<?>... args) {
+    for(ArgDefinition<?> arg : args) {
+      if(arg == null) throw new IllegalArgumentException("Argument cannot be null");
+      if(arg.valueConverter == null) throw new IllegalArgumentException("Argument value converter cannot be null");
+      requiredArguments.add(arg);
+    }
   }
 
   /**

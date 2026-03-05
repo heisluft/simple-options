@@ -15,7 +15,8 @@ import java.util.Map;
  */
 public final class OptionParseResult {
   /** The unmodifiable values of all set options. Never {@code null}. */
-  public final @NotNull Map<OptionDefinition<?>, Object> options;
+  final @NotNull Map<OptionDefinition<?>, Object> options;
+  final @NotNull Map<ArgDefinition<?>, Object> namedArgs;
   /** The matched subcommand, may be {@code null}. */
   public final @Nullable String subcommand;
   /**
@@ -29,12 +30,14 @@ public final class OptionParseResult {
    * {@link OptionParser#parse(String...)} instead.
    *
    * @param options a map of the set options and their values, never {@code null}.
+   * @param namedArgs a map of the set arguments and their values, never {@code null}.
    * @param subcommand the matched subcommand, may be {@code null}.
    * @param additional the list of additional cli args, never {@code null}.
    */
-  OptionParseResult(@NotNull Map<OptionDefinition<?>, Object> options, @Nullable String subcommand,
+  OptionParseResult(@NotNull Map<OptionDefinition<?>, Object> options, @NotNull Map<ArgDefinition<?>, Object> namedArgs, @Nullable String subcommand,
       @NotNull List<String> additional) {
     this.options = Collections.unmodifiableMap(options);
+    this.namedArgs = Collections.unmodifiableMap(namedArgs);
     this.subcommand = subcommand;
     this.additional = Collections.unmodifiableList(additional);
   }
@@ -55,6 +58,21 @@ public final class OptionParseResult {
     if(!options.containsKey(option)) throw new IllegalArgumentException("Option " + option.name + " was not set");
     if(!option.takesValue) throw new IllegalArgumentException("Option " + option.name + " does not take a value");
     return (T) options.get(option);
+  }
+  /**
+   * Retrieves the parsed and converted value of a named argument.
+   *
+   * @param arg the argument definition to query
+   * @param <T> the type of the argument value
+   *
+   * @return the value of the argument.
+   *
+   * @since 0.4.0
+   */
+  @SuppressWarnings("unchecked")
+  public <T> @Nullable T getValue(@NotNull ArgDefinition<T> arg) {
+    if(!namedArgs.containsKey(arg)) throw new IllegalArgumentException("Option " + arg.name + " was not set");
+    return (T) namedArgs.get(arg);
   }
 
   /**

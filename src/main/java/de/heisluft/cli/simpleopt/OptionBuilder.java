@@ -10,8 +10,8 @@ public abstract class OptionBuilder<E, T extends OptionBuilder<E, T>> {
   char shorthand;
   @Nullable Runnable callback;
 
-  OptionBuilder(@Nullable String name) {
-    if(name == null || name.isEmpty()) throw new IllegalArgumentException("Option name cannot be empty");
+  OptionBuilder(@NotNull String name) {
+    if(name.isEmpty()) throw new IllegalArgumentException("Option name cannot be empty");
     if(name.contains(" ")) throw new IllegalArgumentException("Option name cannot contain spaces");
     this.name = name;
   }
@@ -27,8 +27,7 @@ public abstract class OptionBuilder<E, T extends OptionBuilder<E, T>> {
     return (T) this;
   }
 
-  public @NotNull T description(@Nullable String description) {
-    if(description == null) throw new IllegalArgumentException("Option description cannot be null");
+  public @NotNull T description(@NotNull String description) {
     this.description = new OptionDescription(description, "VALUE");
     return (T) this;
   }
