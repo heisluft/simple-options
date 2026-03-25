@@ -282,6 +282,15 @@ public final class OptionParser {
     return new OptionParseResult(optionValues, arguments, command.isRoot ? null : command.name, remainder);
   }
 
+  /**
+   * Wrap the text within a string builder to achieve a certain maximum line lengt by inserting
+   * newline characters on breaks between words. New lines are indented by a certain amount.
+   *
+   * @param out the string builder to append to.
+   * @param indent the amount to indent new lines.
+   * @param max the maximum line length
+   * @return the input string builder after mutation
+   */
   private static @NotNull StringBuilder wrapIndent(@NotNull StringBuilder out, int indent, int max) {
     int remain = out.length();
     int lastWrap = 0;

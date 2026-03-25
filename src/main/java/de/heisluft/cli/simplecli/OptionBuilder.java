@@ -18,7 +18,7 @@ import org.jetbrains.annotations.Nullable;
 public abstract class OptionBuilder<E, T extends OptionBuilder<E, T>> {
   /** The options long name. */
   final @NotNull String name;
-  /** The options description. */
+  /** The options description. Used in help formatting. */
   @NotNull OptionDescription description = new OptionDescription("", "");
   /** The short option name. */
   char shorthand;

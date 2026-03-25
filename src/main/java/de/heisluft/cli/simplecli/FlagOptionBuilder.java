@@ -17,6 +17,9 @@ public final class FlagOptionBuilder extends OptionBuilder<Void, FlagOptionBuild
     super(name);
   }
 
+  /**
+   * {@inheritDoc}
+   */
   @Override
   public @NotNull OptionDefinition<Void> build() {
     return new OptionDefinition<>(name, shorthand != 0 ? shorthand : name.charAt(0), callback, description);

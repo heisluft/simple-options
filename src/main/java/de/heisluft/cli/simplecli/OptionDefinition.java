@@ -28,8 +28,11 @@ public final class OptionDefinition<E> {
   final @Nullable Consumer<Object> valueCallback;
   /** This callback is called when the option is set. */
   final @Nullable Runnable onDefinedCallBack;
+  /** The options description. Used in help formatting. */
   final @NotNull OptionDescription description;
+  /** A function invoked for parsing the option argument into its value. */
   final @Nullable Function<String, E> valueConverter;
+  /** A function used to validate the parsed value. */
   final @Nullable Validator<E> validator;
 
   OptionDefinition(@NotNull String name, char shorthand, @Nullable Runnable callback,
@@ -145,6 +148,9 @@ public final class OptionDefinition<E> {
     return new FlagOptionBuilder(name).shorthand(shorthand).whenSet(onSetCallback).build();
   }
 
+  /**
+   * {@inheritDoc}
+   */
   @Override
   public boolean equals(@Nullable Object o) {
     if(o == null || getClass() != o.getClass()) return false;
@@ -155,6 +161,9 @@ public final class OptionDefinition<E> {
         && description.equals(that.description);
   }
 
+  /**
+   * {@inheritDoc}
+   */
   @Override
   public int hashCode() {
     return Objects.hash(name, shorthand, takesValue, description);

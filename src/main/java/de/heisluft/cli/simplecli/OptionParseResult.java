@@ -23,6 +23,7 @@ public final class OptionParseResult {
   public final @NotNull List<String> additional;
   /** The unmodifiable values of all set options. Never {@code null}. */
   final @NotNull Map<OptionDefinition<?>, Object> options;
+  /** The unmodifiable values of all arguments. Never {@code null}. */
   final @NotNull Map<ArgDefinition<?>, Object> args;
 
   /**

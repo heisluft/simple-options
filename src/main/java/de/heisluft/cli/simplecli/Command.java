@@ -54,11 +54,17 @@ public final class Command {
     isRoot = false;
   }
 
+  /**
+   * {@inheritDoc}
+   */
   @Override
   public boolean equals(@Nullable Object o) {
     return o != null && getClass() == o.getClass() && Objects.equals(name, ((Command) o).name);
   }
 
+  /**
+   * {@inheritDoc}
+   */
   @Override
   public int hashCode() {
     return Objects.hash(name);

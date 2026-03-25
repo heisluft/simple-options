@@ -7,17 +7,28 @@ import java.util.Objects;
 import java.util.function.Consumer;
 import java.util.function.Function;
 
+/**
+ * An ArgumentDefinition represents a CLI argument, consisting of its name, shorthand and its callback
+ * to be run if set. It also is able to auto-convert its cli string value to a specified type.
+ *
+ * @param <E> the type of this options value.
+ *
+ * @since 0.4.0
+ */
+//TODO: document further
 public final class ArgDefinition<E> {
   /** The name of the option. */
   public final @NotNull String name;
+  /** The arguments description. Used in help formatting. */
   final @NotNull String description;
   /** For valued options this callback is called if the option is set. The argument contains the value. */
   final Consumer<Object> valueCallback;
+  /** A function invoked for parsing the arguments string value into its destination type. */
   final @Nullable Function<String, E> valueConverter;
   /** A function used to validate the parsed value. */
   final @NotNull Validator<E> validator;
 
-  public ArgDefinition(
+  ArgDefinition(
       @NotNull String name,
       Consumer<Object> valueCallback,
       @NotNull String description,
@@ -53,6 +64,9 @@ public final class ArgDefinition<E> {
     return new ArgBuilder<>(name, type);
   }
 
+  /**
+   * {@inheritDoc}
+   */
   @Override
   public boolean equals(Object o) {
     if(!(o instanceof ArgDefinition)) return false;
@@ -60,6 +74,9 @@ public final class ArgDefinition<E> {
     return name.equals(requiredArg.name) && description.equals(requiredArg.description);
   }
 
+  /**
+   * {@inheritDoc}
+   */
   @Override
   public int hashCode() {
     return Objects.hash(name, description);
