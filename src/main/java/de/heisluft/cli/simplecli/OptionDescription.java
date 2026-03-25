@@ -15,7 +15,8 @@ final class OptionDescription {
   final @NotNull String argName;
 
   /**
-   * Construct an instance with text and argName string
+   * Construct an instance with text and argName string.
+   *
    * @param text May be {@code null}, defaults to "".
    * @param argName May be {@code null}, defaults to "VALUE".
    */
