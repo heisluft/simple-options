@@ -19,6 +19,7 @@ public final class ValidationResult {
 
   /**
    * Private constructor, as this is an either, or type.
+   *
    * @param valid whether the value vas valid.
    * @param message the error message displayed for an invalid value.
    */
@@ -38,8 +39,8 @@ public final class ValidationResult {
 
   /**
    * Indicate and invalid value with the given error message.
-   * @param message the error message. May be {@code null}.
    *
+   * @param message the error message. May be {@code null}.
    * @return an instance indicating a negative result.
    */
   public static ValidationResult invalid(String message) {
