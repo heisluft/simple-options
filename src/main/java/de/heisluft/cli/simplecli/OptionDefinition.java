@@ -30,6 +30,7 @@ public final class OptionDefinition<E> {
   final @Nullable Runnable onDefinedCallBack;
   final @NotNull OptionDescription description;
   final @Nullable Function<String, E> valueConverter;
+  final @Nullable Validator<E> validator;
 
   OptionDefinition(@NotNull String name, char shorthand, @Nullable Runnable callback,
       @NotNull OptionDescription description) {
@@ -40,12 +41,19 @@ public final class OptionDefinition<E> {
     this.onDefinedCallBack = callback;
     this.valueCallback = null;
     this.valueConverter = null;
+    this.validator = null;
   }
 
   @SuppressWarnings({"rawtypes", "unchecked"})
-  OptionDefinition(@NotNull String name, char shorthand, @Nullable Consumer valueCallback,
-      @Nullable Runnable onDefinedCallBack, @NotNull Function<String, E> valueConverter,
-      @NotNull OptionDescription description) {
+  OptionDefinition(
+      @NotNull String name,
+      char shorthand,
+      @Nullable Consumer valueCallback,
+      @Nullable Runnable onDefinedCallBack,
+      @NotNull Function<String, E> valueConverter,
+      @NotNull OptionDescription description,
+      @Nullable Validator<E> validator
+  ) {
     this.name = name;
     this.shorthand = shorthand;
     this.takesValue = true;
@@ -53,6 +61,7 @@ public final class OptionDefinition<E> {
     this.valueCallback = valueCallback;
     this.valueConverter = valueConverter;
     this.description = description;
+    this.validator = validator != null ? validator : (e) -> ValidationResult.valid();
   }
 
   public static @NotNull ValueOptionBuilder<String> valued(@NotNull String name) {

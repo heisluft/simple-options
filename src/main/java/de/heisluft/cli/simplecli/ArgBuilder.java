@@ -25,6 +25,8 @@ public final class ArgBuilder<E> {
   private @Nullable Consumer valueCallback;
   /** The arguments description, used in help formatting. */
   private @Nullable String description;
+  /** A function used to validate the parsed value. */
+  private @Nullable Validator<E> validator;
 
   /**
    * This internal constructor sets the final name as well as an initial type.
@@ -37,7 +39,7 @@ public final class ArgBuilder<E> {
     if(name.isEmpty()) throw new IllegalArgumentException("Option name cannot be empty");
     if(name.contains(" ")) throw new IllegalArgumentException("Option name cannot contain spaces");
     this.name = name;
-    this.valueConverter = TypedBuilder.findConverter(type);
+    this.valueConverter = ValueConverters.findConverter(type);
   }
 
   /**
@@ -54,6 +56,7 @@ public final class ArgBuilder<E> {
 
   /**
    * Map the converted value of this argument to another, converting this to an ArgBuilder&lt;T&gt;.
+   * This method will fail if a validator or a callback have been set previously.
    *
    * @param converter the converting function. Takes the converted argument.
    * Must not produce {@code null}
@@ -64,6 +67,7 @@ public final class ArgBuilder<E> {
   @SuppressWarnings("unchecked")
   public @NotNull <T> ArgBuilder<T> mapValue(@NotNull Function<E, T> converter) {
     if(this.valueCallback != null) throw new IllegalStateException("Value callback already set");
+    if(this.validator != null) throw new IllegalStateException("Validator already set");
     if(this.valueConverter == null) throw new IllegalStateException("Value converter not set");
     ArgBuilder<T> self = (ArgBuilder<T>) this;
     self.valueConverter = valueConverter.andThen(converter);
@@ -72,9 +76,9 @@ public final class ArgBuilder<E> {
 
   /**
    * Set a custom function to be invoked when the string value of this argument is to be converted
-   * to the target object.
+   * to the target value.
    *
-   * @param converter the converting function. Takes the string argument. Must not produce {@code null}
+   * @param converter the converting function. Takes the string argument. Must not produce {@code null}.
    * @return this
    */
   public @NotNull ArgBuilder<E> valueConverter(@Nullable Function<String, E> converter) {
@@ -85,12 +89,25 @@ public final class ArgBuilder<E> {
 
   /**
    * Set a callback to be invoked when the value of this argument is parsed and converted.
+   * If null, no callback shall be performed.
    *
-   * @param callback the receiving code
+   * @param callback the receiving code, mmy be {@code null}.
    * @return this
    */
   public @NotNull ArgBuilder<E> callback(@Nullable Consumer<E> callback) {
     this.valueCallback = callback;
+    return this;
+  }
+
+  /**
+   * Change the validation function for this arguments value after conversion.
+   * If null, no validation shall be performed.
+   *
+   * @param validator the validation function, may be {@code null}.
+   * @return this
+   */
+  public @NotNull ArgBuilder<E> validatedBy(@Nullable Validator<E> validator) {
+    this.validator = validator;
     return this;
   }
 
@@ -100,6 +117,6 @@ public final class ArgBuilder<E> {
    * @return the built definition
    */
   public @NotNull ArgDefinition<E> build() {
-    return new ArgDefinition<>(name, valueCallback, description == null ? "" : description, valueConverter);
+    return new ArgDefinition<>(name, valueCallback, description == null ? "" : description, valueConverter, validator);
   }
 }

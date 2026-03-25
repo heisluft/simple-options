@@ -12,12 +12,17 @@ import java.util.Locale;
 import java.util.Map;
 import java.util.function.Function;
 
-interface TypedBuilder {
+/**
+ * Utility Class for finding default converters of option and argument values.
+ *
+ * @since 0.4.0
+ */
+final class ValueConverters {
 
   /** The unmodifiable map of all default converters. */
-  @NotNull Map<Class<?>, Function<String, ?>> DEFAULT_CONVERTERS = getDefaultConverters();
+  private static final @NotNull Map<Class<?>, Function<String, ?>> DEFAULT_CONVERTERS;
 
-  static Map<Class<?>, Function<String, ?>> getDefaultConverters() {
+  static {
     Map<Class<?>, Function<String, ?>> converters = new HashMap<>();
     converters.put(Boolean.class, Boolean::parseBoolean);
     converters.put(Byte.class, Byte::parseByte);
@@ -28,9 +33,20 @@ interface TypedBuilder {
     converters.put(File.class, File::new);
     converters.put(Path.class, Paths::get);
     converters.put(String.class, Function.identity());
-    return Collections.unmodifiableMap(converters);
+    DEFAULT_CONVERTERS = Collections.unmodifiableMap(converters);
   }
 
+  /** Do not instantiate. */
+  private ValueConverters() {}
+
+  /**
+   * Find the default value converter for the given type, represented by its class.
+   * If none is found, this function may return {@code null}.
+   *
+   * @param type the class of the type to map to. Must not be {@code null}.
+   * @param <T> the destination type to map to.
+   * @return a matching value converter or {@code null} if none is found.
+   */
   @SuppressWarnings("unchecked")
   static <T> @Nullable Function<String, T> findConverter(@NotNull Class<T> type) {
     if(DEFAULT_CONVERTERS.containsKey(type)) return (Function<String, T>) DEFAULT_CONVERTERS.get(type);

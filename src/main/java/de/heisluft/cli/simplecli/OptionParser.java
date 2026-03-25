@@ -240,6 +240,9 @@ public final class OptionParser {
                   "argument " + argDef.name, e);
             }
             if(value == null) throw new OptionParseException(NULL_VALUE, args[j], "argument " + argDef.name);
+            ValidationResult result = argDef.validator.validate(value);
+            if(!result.valid)
+              throw new RuntimeException("Invalid value for argument " + argDef.name + ": " + result.message);
             arguments.put(argDef, value);
           } else remainder.add(args[j]);
         }
@@ -263,6 +266,10 @@ public final class OptionParser {
         throw new OptionParseException(CONVERSION_ERROR, v, "option --" + k.name, e);
       }
       if(value == null && k.takesValue) throw new OptionParseException(NULL_VALUE, v, "option " + k.name);
+      if(k.takesValue) {
+        ValidationResult result = k.validator.validate(value);
+        if(!result.valid) throw new RuntimeException("Invalid value for option " + k.name + ": " + result.message);
+      }
       optionValues.put(k, value);
     });
     arguments.forEach((k, v) -> {

@@ -14,13 +14,20 @@ public final class ArgDefinition<E> {
   /** For valued options this callback is called if the option is set. The argument contains the value. */
   final Consumer<Object> valueCallback;
   final @Nullable Function<String, E> valueConverter;
+  /** A function used to validate the parsed value. */
+  final @NotNull Validator<E> validator;
 
-  public ArgDefinition(@NotNull String name, Consumer<Object> valueCallback, @NotNull String description,
-      @Nullable Function<String, E> valueConverter) {
+  public ArgDefinition(
+      @NotNull String name,
+      Consumer<Object> valueCallback,
+      @NotNull String description,
+      @Nullable Function<String, E> valueConverter,
+      @Nullable Validator<E> validator) {
     this.name = name;
     this.valueCallback = valueCallback;
     this.description = description;
     this.valueConverter = valueConverter;
+    this.validator = validator != null ? validator : v -> ValidationResult.valid();
   }
 
   public static <T> @NotNull ArgDefinition<T> of(
