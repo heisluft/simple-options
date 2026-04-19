@@ -6,6 +6,8 @@ import org.jetbrains.annotations.Nullable;
 import java.util.Collections;
 import java.util.List;
 import java.util.Map;
+import java.util.Objects;
+import java.util.function.Supplier;
 
 /**
  * The option parse result is the result of option parsing. It holds all the set options and their
@@ -60,6 +62,7 @@ public final class OptionParseResult {
    */
   @SuppressWarnings("unchecked")
   public <T> @NotNull T getOption(@NotNull OptionDefinition<T> option) {
+    Objects.requireNonNull(option, "Option must not be null");
     if(!options.containsKey(option)) throw new IllegalArgumentException("Option " + option.name + " was not set");
     if(!option.takesValue) throw new IllegalArgumentException("Option " + option.name + " does not take a value");
     return (T) options.get(option);
@@ -67,21 +70,23 @@ public final class OptionParseResult {
 
   /**
    * Retrieves the parsed and converted value of an option, failing for options that do not take
-   * values. Takes a default value if the option was not set.
+   * values. Takes a default value supplier if the option was not set.
    *
    * @param option the option definition to query
-   * @param defaultValue the default to be returned if the option was not set
+   * @param defaultSupplier supplier of the default value to be returned if the option was not set
    *
    * @param <T> the type of the option value
    *
-   * @return the value of the option. Never null.
+   * @return the value of the option. May be null if the default supplier returns null.
    *
    * @since 0.1.0
    */
   @SuppressWarnings("unchecked")
-  public <T> @NotNull T getOption(@NotNull OptionDefinition<T> option, @NotNull T defaultValue) {
+  public <T> @Nullable T getOption(@NotNull OptionDefinition<T> option, @NotNull Supplier<T> defaultSupplier) {
+    Objects.requireNonNull(option, "Option must not be null");
+    Objects.requireNonNull(defaultSupplier, "Default value must not be null");
     if(!option.takesValue) throw new IllegalArgumentException("Option " + option.name + " does not take a value");
-    return options.containsKey(option) ? (T) options.get(option) : defaultValue;
+    return options.containsKey(option) ? (T) options.get(option) : defaultSupplier.get();
   }
 
   /**
@@ -97,6 +102,7 @@ public final class OptionParseResult {
    */
   @SuppressWarnings("unchecked")
   public <T> @NotNull T getArg(@NotNull ArgDefinition<T> arg) {
+    Objects.requireNonNull(arg, "Arg must not be null");
     if(!args.containsKey(arg)) throw new IllegalArgumentException("Argument " + arg.name
         + " is not registered for the given command");
     return (T) args.get(arg);
@@ -112,6 +118,6 @@ public final class OptionParseResult {
    * @since 0.1.0
    */
   public boolean isSet(@NotNull OptionDefinition<?> option) {
-    return options.containsKey(option);
+    return options.containsKey(Objects.requireNonNull(option, "Option must not be null"));
   }
 }

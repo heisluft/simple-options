@@ -3,9 +3,10 @@ package de.heisluft.cli.simplecli;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
+import java.util.ArrayList;
+import java.util.List;
 import java.util.Objects;
 import java.util.function.Consumer;
-import java.util.function.Function;
 
 /**
  * An OptionDefinition represents a CLI option, consisting of its name, shorthand and its callback
@@ -24,16 +25,11 @@ public final class OptionDefinition<E> {
   public final char shorthand;
   /** If the Option takes a value, defined by the callback type supplied within the constructor. */
   public final boolean takesValue;
-  /** For valued options this callback is called if the option is set. The argument contains the value. */
-  final @Nullable Consumer<Object> valueCallback;
   /** This callback is called when the option is set. */
   final @Nullable Runnable onDefinedCallBack;
   /** The options description. Used in help formatting. */
   final @NotNull OptionDescription description;
-  /** A function invoked for parsing the option argument into its value. */
-  final @Nullable Function<String, E> valueConverter;
-  /** A function used to validate the parsed value. */
-  final @Nullable Validator<E> validator;
+  final @NotNull List<ValueConstructionStage<?>> valueConstructionStages;
 
   OptionDefinition(@NotNull String name, char shorthand, @Nullable Runnable callback,
       @NotNull OptionDescription description) {
@@ -42,29 +38,23 @@ public final class OptionDefinition<E> {
     this.takesValue = false;
     this.description = description;
     this.onDefinedCallBack = callback;
-    this.valueCallback = null;
-    this.valueConverter = null;
-    this.validator = null;
+    this.valueConstructionStages = new ArrayList<>();
   }
 
   @SuppressWarnings({"rawtypes", "unchecked"})
   OptionDefinition(
       @NotNull String name,
       char shorthand,
-      @Nullable Consumer valueCallback,
       @Nullable Runnable onDefinedCallBack,
-      @NotNull Function<String, E> valueConverter,
       @NotNull OptionDescription description,
-      @Nullable Validator<E> validator
+      @NotNull List<ValueConstructionStage<?>> valueConstructionStages
   ) {
     this.name = name;
     this.shorthand = shorthand;
     this.takesValue = true;
     this.onDefinedCallBack = onDefinedCallBack;
-    this.valueCallback = valueCallback;
-    this.valueConverter = valueConverter;
     this.description = description;
-    this.validator = validator != null ? validator : (e) -> ValidationResult.valid();
+    this.valueConstructionStages = valueConstructionStages;
   }
 
   public static @NotNull ValueOptionBuilder<String> valued(@NotNull String name) {

@@ -77,11 +77,8 @@ public final class Command {
    * @param args the non-null array of arguments to accept. All Elements must be non-null.
    */
   public void addRequiredArgs(@NotNull ArgDefinition<?>... args) {
-    for(ArgDefinition<?> arg : args) {
-      if(arg == null) throw new IllegalArgumentException("Argument cannot be null");
-      if(arg.valueConverter == null) throw new IllegalArgumentException("Argument value converter cannot be null");
-      requiredArguments.add(arg);
-    }
+    for(ArgDefinition<?> arg : args)
+      requiredArguments.add(Objects.requireNonNull(arg, "Argument must not be null"));
   }
 
   /**
@@ -90,11 +87,7 @@ public final class Command {
    * @param options the non-null array of options to accept. All Elements must be non-null.
    */
   public void addOptions(@NotNull OptionDefinition<?>... options) {
-    for(OptionDefinition<?> option : options) {
-      if(option == null) throw new IllegalArgumentException("Null option supplied");
-      if(option.takesValue && option.valueConverter == null)
-        throw new IllegalArgumentException("Option " + option.name + " has no value converter");
-      optionDefinitions.add(option);
-    }
+    for(OptionDefinition<?> option : options)
+      optionDefinitions.add(Objects.requireNonNull(option, "Option must not be null"));
   }
 }

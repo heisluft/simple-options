@@ -145,7 +145,7 @@
     <module name="OperatorWrap"/>
     <module name="ParenPad"/>
     <module name="SeparatorWrap">
-      <property name="tokens" value="COMMA, SEMI, ELLIPSIS, LPAREN, ARRAY_DECLARATOR, RBRACK, METHOD_REF"/>
+      <property name="tokens" value="COMMA, SEMI, ELLIPSIS, ARRAY_DECLARATOR, RBRACK, METHOD_REF"/>
     </module>
     <module name="SingleSpaceSeparator"/>
     <module name="TypecastParenPad"/>

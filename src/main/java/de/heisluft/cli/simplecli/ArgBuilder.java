@@ -3,6 +3,8 @@ package de.heisluft.cli.simplecli;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
+import java.util.LinkedList;
+import java.util.Objects;
 import java.util.function.Consumer;
 import java.util.function.Function;
 
@@ -15,18 +17,14 @@ import java.util.function.Function;
  *
  * @since 0.4.0
  */
-@SuppressWarnings({"unchecked", "rawtypes"})
+@SuppressWarnings("unchecked")
 public final class ArgBuilder<E> {
   /** The name of the argument used in help formatting. */
   final @NotNull String name;
   /** This function is invoked with the raw string CLI argument. It must not return null. */
-  private @Nullable Function<String, E> valueConverter;
-  /** This callback is called with the converted value after successful CLI parsing. MUST be raw. */
-  private @Nullable Consumer valueCallback;
+  private final @NotNull LinkedList<ValueConstructionStage<?>> valueConstructionStages = new LinkedList<>();
   /** The arguments description, used in help formatting. */
   private @Nullable String description;
-  /** A function used to validate the parsed value. */
-  private @Nullable Validator<E> validator;
 
   /**
    * This internal constructor sets the final name as well as an initial type.
@@ -36,10 +34,12 @@ public final class ArgBuilder<E> {
    * @param type the initial type the value will be converted to.
    */
   ArgBuilder(@NotNull String name, @NotNull Class<E> type) {
-    if(name.isEmpty()) throw new IllegalArgumentException("Option name cannot be empty");
-    if(name.contains(" ")) throw new IllegalArgumentException("Option name cannot contain spaces");
+    Objects.requireNonNull(name, "Argument name must not be null");
+    Objects.requireNonNull(type, "Type must not be null");
+    if(name.isEmpty()) throw new IllegalArgumentException("Argument name must not be empty");
+    if(name.contains(" ")) throw new IllegalArgumentException("Argument name must not contain spaces");
     this.name = name;
-    this.valueConverter = ValueConverters.findConverter(type);
+    valueConstructionStages.add(new ValueConstructionStage<>(ValueConverters.findConverter(type)));
   }
 
   /**
@@ -50,6 +50,7 @@ public final class ArgBuilder<E> {
    * @return this
    */
   public @NotNull ArgBuilder<E> description(@NotNull String description) {
+    Objects.requireNonNull(description, "Description must not be null");
     this.description = description;
     return this;
   }
@@ -65,13 +66,12 @@ public final class ArgBuilder<E> {
    * @return this
    */
   @SuppressWarnings("unchecked")
-  public @NotNull <T> ArgBuilder<T> mapValue(@NotNull Function<E, T> converter) {
-    if(this.valueCallback != null) throw new IllegalStateException("Value callback already set");
-    if(this.validator != null) throw new IllegalStateException("Validator already set");
-    if(this.valueConverter == null) throw new IllegalStateException("Value converter not set");
-    ArgBuilder<T> self = (ArgBuilder<T>) this;
-    self.valueConverter = valueConverter.andThen(converter);
-    return self;
+  public @NotNull <T> ArgBuilder<T> mapValue(@NotNull Function<@NotNull E, @NotNull T> converter) {
+    Objects.requireNonNull(converter, "Converter must not be null");
+    if(valueConstructionStages.getLast().converter == null)
+      throw new IllegalStateException("No way to obtain value at previous stage");
+    valueConstructionStages.add(new ValueConstructionStage<>(converter));
+    return (ArgBuilder<T>) this;
   }
 
   /**
@@ -81,9 +81,12 @@ public final class ArgBuilder<E> {
    * @param converter the converting function. Takes the string argument. Must not produce {@code null}.
    * @return this
    */
-  public @NotNull ArgBuilder<E> valueConverter(@Nullable Function<String, E> converter) {
-    if(converter == null) throw new NullPointerException("converter cannot be null");
-    this.valueConverter = converter;
+  @SuppressWarnings("unchecked")
+  public @NotNull ArgBuilder<E> valueConverter(@NotNull Function<@NotNull String, @NotNull E> converter) {
+    Objects.requireNonNull(converter, "Converter must not be null");
+    if(valueConstructionStages.size() > 1)
+      throw new IllegalStateException("Initial converter must be set before any map call");
+    ((ValueConstructionStage<E>) valueConstructionStages.getLast()).converter = converter;
     return this;
   }
 
@@ -94,8 +97,8 @@ public final class ArgBuilder<E> {
    * @param callback the receiving code, mmy be {@code null}.
    * @return this
    */
-  public @NotNull ArgBuilder<E> callback(@Nullable Consumer<E> callback) {
-    this.valueCallback = callback;
+  public @NotNull ArgBuilder<E> callback(@Nullable Consumer<@NotNull E> callback) {
+    ((ValueConstructionStage<E>) valueConstructionStages.getLast()).callback = callback;
     return this;
   }
 
@@ -106,8 +109,8 @@ public final class ArgBuilder<E> {
    * @param validator the validation function, may be {@code null}.
    * @return this
    */
-  public @NotNull ArgBuilder<E> validatedBy(@Nullable Validator<E> validator) {
-    this.validator = validator;
+  public @NotNull ArgBuilder<E> validatedBy(@Nullable Validator<@NotNull E> validator) {
+    ((ValueConstructionStage<E>) valueConstructionStages.getLast()).validator = validator;
     return this;
   }
 
@@ -117,6 +120,6 @@ public final class ArgBuilder<E> {
    * @return the built definition
    */
   public @NotNull ArgDefinition<E> build() {
-    return new ArgDefinition<>(name, valueCallback, description == null ? "" : description, valueConverter, validator);
+    return new ArgDefinition<>(name, description == null ? "" : description, valueConstructionStages);
   }
 }

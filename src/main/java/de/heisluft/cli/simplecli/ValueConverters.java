@@ -55,7 +55,7 @@ final class ValueConverters {
         for(T enumConstant : type.getEnumConstants()) {
           if(enumConstant.toString().equals(t.toUpperCase(Locale.ROOT))) return enumConstant;
         }
-        return null;
+        throw new IllegalArgumentException("No enum constant " + t + " found");
       };
     }
     return null;

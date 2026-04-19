@@ -3,9 +3,9 @@ package de.heisluft.cli.simplecli;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
+import java.util.List;
 import java.util.Objects;
 import java.util.function.Consumer;
-import java.util.function.Function;
 
 /**
  * An ArgumentDefinition represents a CLI argument, consisting of its name, shorthand and its callback
@@ -21,24 +21,15 @@ public final class ArgDefinition<E> {
   public final @NotNull String name;
   /** The arguments description. Used in help formatting. */
   final @NotNull String description;
-  /** For valued options this callback is called if the option is set. The argument contains the value. */
-  final Consumer<Object> valueCallback;
-  /** A function invoked for parsing the arguments string value into its destination type. */
-  final @Nullable Function<String, E> valueConverter;
-  /** A function used to validate the parsed value. */
-  final @NotNull Validator<E> validator;
+  final @NotNull List<@NotNull ValueConstructionStage<?>> valueConstructionStages;
 
   ArgDefinition(
       @NotNull String name,
-      Consumer<Object> valueCallback,
       @NotNull String description,
-      @Nullable Function<String, E> valueConverter,
-      @Nullable Validator<E> validator) {
+      @NotNull List<@NotNull ValueConstructionStage<?>> valueConstructionStages) {
     this.name = name;
-    this.valueCallback = valueCallback;
     this.description = description;
-    this.valueConverter = valueConverter;
-    this.validator = validator != null ? validator : v -> ValidationResult.valid();
+    this.valueConstructionStages = valueConstructionStages;
   }
 
   public static <T> @NotNull ArgDefinition<T> of(
