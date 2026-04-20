@@ -12,6 +12,7 @@ import java.util.HashSet;
 import java.util.List;
 import java.util.Map;
 import java.util.Set;
+import java.util.function.Consumer;
 import java.util.function.Predicate;
 import java.util.stream.Collectors;
 
@@ -238,14 +239,13 @@ public final class OptionParser {
               try {
                 value = stage.converter.apply(value);
               } catch(Exception e) {
-                throw new OptionParseException(CONVERSION_ERROR, value.toString(), "argument " + argDef.name, e);
+                throw new OptionParseException(e, CONVERSION_ERROR, value.toString(), "argument " + argDef);
               }
-              if(value == null) throw new OptionParseException(NULL_VALUE, args[j], "argument " + argDef.name);
+              if(value == null) throw new OptionParseException(NULL_VALUE, args[j], "argument " + argDef);
               ValidationResult result =
                   stage.validator != null ? stage.validator.validate(value) : ValidationResult.valid();
               if(!result.valid)
-                throw new RuntimeException("Invalid value for argument " + argDef.name + ": " + result.message);
-              if(stage.callback != null) stage.callback.accept(value);
+                throw new RuntimeException("Invalid value for argument " + argDef + ": " + result.message);
             }
             arguments.put(argDef, value);
           } else remainder.add(args[j]);
@@ -262,7 +262,7 @@ public final class OptionParser {
     Command finalCommand = command;
     rawOptions.forEach((k, v) -> {
       if(!finalCommand.optionDefinitions.contains(k))
-        throw new OptionParseException(INVALID_OPTION, "--" + k.name);
+        throw new OptionParseException(INVALID_OPTION, k.toString());
       List<ValueConstructionStage> stages = k.valueConstructionStages;
       if(stages.isEmpty()) {
         optionValues.put(k, null);
@@ -271,19 +271,22 @@ public final class OptionParser {
       Object value = v;
       for(ValueConstructionStage stage : stages) {
         try {
-          value = stage.converter.apply(v);
+          value = stage.converter.apply(value);
         } catch(Exception e) {
-          throw new OptionParseException(CONVERSION_ERROR, v, "option --" + k.name, e);
+          throw new OptionParseException(e, CONVERSION_ERROR, v, "option " + k);
         }
-        if(value == null) throw new OptionParseException(NULL_VALUE, v, "option " + k.name);
+        if(value == null) throw new OptionParseException(NULL_VALUE, v, "option " + k);
         ValidationResult result = stage.validator == null ? ValidationResult.valid() : stage.validator.validate(value);
-        if(!result.valid) throw new RuntimeException("Invalid value for option " + k.name + ": " + result.message);
-        if(stage.callback != null) stage.callback.accept(value);
+        if(!result.valid) throw new RuntimeException("Invalid value for option " + k + ": " + result.message);
       }
       optionValues.put(k, value);
     });
+    arguments.forEach((k, v) -> {
+      if(k.valueConsumer != null) ((Consumer) k.valueConsumer).accept(v);
+    });
     optionValues.forEach((k, v) -> {
       if(k.onDefinedCallBack != null) k.onDefinedCallBack.run();
+      if(k.valueConsumer != null) ((Consumer) k.valueConsumer).accept(v);
     });
     return new OptionParseResult(optionValues, arguments, command.isRoot ? null : command.name, remainder);
   }

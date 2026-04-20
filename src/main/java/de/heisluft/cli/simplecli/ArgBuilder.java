@@ -57,7 +57,6 @@ public final class ArgBuilder<E> {
 
   /**
    * Map the converted value of this argument to another, converting this to an ArgBuilder&lt;T&gt;.
-   * This method will fail if a validator or a callback have been set previously.
    *
    * @param converter the converting function. Takes the converted argument.
    * Must not produce {@code null}
@@ -91,18 +90,6 @@ public final class ArgBuilder<E> {
   }
 
   /**
-   * Set a callback to be invoked when the value of this argument is parsed and converted.
-   * If null, no callback shall be performed.
-   *
-   * @param callback the receiving code, mmy be {@code null}.
-   * @return this
-   */
-  public @NotNull ArgBuilder<E> callback(@Nullable Consumer<@NotNull E> callback) {
-    ((ValueConstructionStage<E>) valueConstructionStages.getLast()).callback = callback;
-    return this;
-  }
-
-  /**
    * Change the validation function for this arguments value after conversion.
    * If null, no validation shall be performed.
    *
@@ -120,6 +107,10 @@ public final class ArgBuilder<E> {
    * @return the built definition
    */
   public @NotNull ArgDefinition<E> build() {
-    return new ArgDefinition<>(name, description == null ? "" : description, valueConstructionStages);
+    return build(null);
+  }
+
+  public @NotNull ArgDefinition<E> build(@Nullable Consumer<@NotNull E> consumer) {
+    return new ArgDefinition<>(name, description == null ? "" : description, valueConstructionStages, consumer);
   }
 }

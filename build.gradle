@@ -6,7 +6,7 @@ plugins {
 }
 
 group 'de.heisluft.cli'
-version '0.4.0-pre+13'
+version '0.4.0-pre+16'
 
 java {
   withSourcesJar()

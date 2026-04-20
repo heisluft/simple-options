@@ -30,6 +30,7 @@ public final class OptionDefinition<E> {
   /** The options description. Used in help formatting. */
   final @NotNull OptionDescription description;
   final @NotNull List<ValueConstructionStage<?>> valueConstructionStages;
+  final @Nullable Consumer<?> valueConsumer;
 
   OptionDefinition(@NotNull String name, char shorthand, @Nullable Runnable callback,
       @NotNull OptionDescription description) {
@@ -39,15 +40,16 @@ public final class OptionDefinition<E> {
     this.description = description;
     this.onDefinedCallBack = callback;
     this.valueConstructionStages = new ArrayList<>();
+    this.valueConsumer = null;
   }
 
-  @SuppressWarnings({"rawtypes", "unchecked"})
   OptionDefinition(
       @NotNull String name,
       char shorthand,
       @Nullable Runnable onDefinedCallBack,
       @NotNull OptionDescription description,
-      @NotNull List<ValueConstructionStage<?>> valueConstructionStages
+      @NotNull List<ValueConstructionStage<?>> valueConstructionStages,
+      @Nullable Consumer<E> valueConsumer
   ) {
     this.name = name;
     this.shorthand = shorthand;
@@ -55,6 +57,7 @@ public final class OptionDefinition<E> {
     this.onDefinedCallBack = onDefinedCallBack;
     this.description = description;
     this.valueConstructionStages = valueConstructionStages;
+    this.valueConsumer = valueConsumer;
   }
 
   public static @NotNull ValueOptionBuilder<String> valued(@NotNull String name) {
@@ -68,13 +71,12 @@ public final class OptionDefinition<E> {
 
   public static @NotNull OptionDefinition<String> valued(@NotNull String name,
       @Nullable Consumer<String> valueCallback) {
-    return new ValueOptionBuilder<>(name, String.class).callback(valueCallback).build();
+    return new ValueOptionBuilder<>(name, String.class).build(valueCallback);
   }
 
   public static @NotNull OptionDefinition<String> valued(@NotNull String name, char shorthand,
       @NotNull Consumer<String> valueCallback) {
-    return new ValueOptionBuilder<>(name, String.class).shorthand(shorthand)
-        .callback(valueCallback).build();
+    return new ValueOptionBuilder<>(name, String.class).shorthand(shorthand).build(valueCallback);
   }
 
   public static <T> @NotNull ValueOptionBuilder<T> valued(@NotNull String name, @NotNull Class<T> type) {
@@ -88,13 +90,12 @@ public final class OptionDefinition<E> {
 
   public static <T> @NotNull OptionDefinition<T> valued(@NotNull String name,
       @NotNull Class<T> type, @Nullable Consumer<T> valueCallback) {
-    return new ValueOptionBuilder<>(name, type).callback(valueCallback).build();
+    return new ValueOptionBuilder<>(name, type).build(valueCallback);
   }
 
   public static <T> @NotNull OptionDefinition<T> valued(@NotNull String name, char shorthand,
       @NotNull Class<T> type, @Nullable Consumer<T> valueCallback) {
-    return new ValueOptionBuilder<>(name, type).shorthand(shorthand).callback(valueCallback)
-        .build();
+    return new ValueOptionBuilder<>(name, type).shorthand(shorthand).build(valueCallback);
   }
 
   public static @NotNull FlagOptionBuilder flag(@NotNull String name) {
@@ -157,5 +158,10 @@ public final class OptionDefinition<E> {
   @Override
   public int hashCode() {
     return Objects.hash(name, shorthand, takesValue, description);
+  }
+
+  @Override
+  public String toString() {
+    return "--" + name;
   }
 }

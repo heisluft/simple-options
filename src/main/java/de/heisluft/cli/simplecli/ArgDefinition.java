@@ -22,14 +22,17 @@ public final class ArgDefinition<E> {
   /** The arguments description. Used in help formatting. */
   final @NotNull String description;
   final @NotNull List<@NotNull ValueConstructionStage<?>> valueConstructionStages;
+  final @Nullable Consumer<? super E> valueConsumer;
 
   ArgDefinition(
       @NotNull String name,
       @NotNull String description,
-      @NotNull List<@NotNull ValueConstructionStage<?>> valueConstructionStages) {
+      @NotNull List<@NotNull ValueConstructionStage<?>> valueConstructionStages,
+      @Nullable Consumer<? super E> valueConsumer) {
     this.name = name;
     this.description = description;
     this.valueConstructionStages = valueConstructionStages;
+    this.valueConsumer = valueConsumer;
   }
 
   public static <T> @NotNull ArgDefinition<T> of(
@@ -37,14 +40,14 @@ public final class ArgDefinition<E> {
       @NotNull Class<T> type,
       @Nullable Consumer<T> valueCallback
   ) {
-    return new ArgBuilder<>(name, type).callback(valueCallback).build();
+    return new ArgBuilder<>(name, type).build(valueCallback);
   }
 
   public static @NotNull ArgDefinition<String> of(
       @NotNull String name,
       @Nullable Consumer<String> valueCallback
   ) {
-    return new ArgBuilder<>(name, String.class).callback(valueCallback).build();
+    return new ArgBuilder<>(name, String.class).build(valueCallback);
   }
 
   public static @NotNull ArgBuilder<String> arg(@NotNull String name) {
@@ -71,5 +74,10 @@ public final class ArgDefinition<E> {
   @Override
   public int hashCode() {
     return Objects.hash(name, description);
+  }
+
+  @Override
+  public String toString() {
+    return name;
   }
 }

@@ -34,7 +34,6 @@ public final class ValueOptionBuilder<E> extends OptionBuilder<E, ValueOptionBui
 
   /**
    * Map the converted value of this argument to another, converting this to an ValueOptionBuilder&lt;T&gt;.
-   * This method will fail if a validator or a callback have been set previously.
    *
    * @param converter the converting function. Takes the converted argument.
    * Must not produce {@code null}
@@ -68,19 +67,6 @@ public final class ValueOptionBuilder<E> extends OptionBuilder<E, ValueOptionBui
   }
 
   /**
-   * Set a callback to be invoked when the value of this argument is parsed and converted.
-   * If null, no callback shall be performed.
-   *
-   * @param callback the receiving code, mmy be {@code null}.
-   * @return this
-   */
-  @SuppressWarnings("unchecked")
-  public @NotNull ValueOptionBuilder<E> callback(@Nullable Consumer<@NotNull E> callback) {
-    ((ValueConstructionStage<E>) valueConstructionStages.getLast()).callback = callback;
-    return this;
-  }
-
-  /**
    * Change the validation function for this options value after conversion.
    * If null, no validation shall be performed.
    *
@@ -99,6 +85,10 @@ public final class ValueOptionBuilder<E> extends OptionBuilder<E, ValueOptionBui
    */
   @Override
   public @NotNull OptionDefinition<E> build() {
+    return build(null);
+  }
+
+  public @NotNull OptionDefinition<E> build(@Nullable Consumer<@NotNull E> callback) {
     Objects.requireNonNull(
         valueConstructionStages.getFirst().converter,
         "Initial value converter must not be null"
@@ -106,9 +96,10 @@ public final class ValueOptionBuilder<E> extends OptionBuilder<E, ValueOptionBui
     return new OptionDefinition<>(
         name,
         shorthand != 0 ? shorthand : name.charAt(0),
-        callback,
+        this.callback,
         description,
-        valueConstructionStages
+        valueConstructionStages,
+        callback
     );
   }
 
